@@ -10,6 +10,7 @@ SCREEN_WIDTH = 1600
 SCREEN_HEIGHT = 900
 SCREEN_TITLE = "Game"
 PLAYER_MOVEMENT_SPEED = 5
+PLAYER_DASH_MULT = 2
 
 #Constants for scaling
 CHARACTER_SCALING = 1
@@ -32,10 +33,13 @@ class myGame(arcade.Window):
         #Scene
         self.scene = None
 
+        #Physics engine
+        self.physics_engine = None
+
         arcade.set_background_color(arcade.csscolor.DIM_GRAY)
 
     def setup(self):
-        """Sets up / restarts the game"""
+        """Sets up / restarts the game."""
 
         #Initializes the scene
         self.scene = arcade.Scene()
@@ -54,23 +58,58 @@ class myGame(arcade.Window):
         self.player_sprite.center_y = 450
         self.scene.add_sprite("Player", self.player_sprite)
 
-        # Create the ground
-        # This shows using a loop to place multiple sprites horizontally
-        for x in range(0, 1600, 64):
-            
-            wall = arcade.Sprite(":resources:images/tiles/grassMid.png", TILE_SCALING)
-            wall.center_x = x
-            wall.center_y = 32
-            self.scene.add_sprite("Walls", wall)
+        
+        #Creates the physics engine
+        self.physics_engine = arcade.PhysicsEngineSimple(
+            self.player_sprite, self.scene.get_sprite_list("Walls")
+        )
 
     def on_draw(self):
-        """Renders the screen"""
+        """Renders the screen."""
         #clears the existing screen
         self.clear()
 
         #Draws the sprites
         self.scene.draw()
 
+    def on_key_press(self, key, modifiers):
+        """When a key is pressed/held down."""
+
+        if key == arcade.key.S and modifiers == arcade.key.MOD_SHIFT:
+            self.player_sprite.change_y += -PLAYER_MOVEMENT_SPEED * PLAYER_DASH_MULT
+
+        if key == arcade.key.W:
+            self.player_sprite.change_y += PLAYER_MOVEMENT_SPEED
+        elif key == arcade.key.S:
+            self.player_sprite.change_y += -PLAYER_MOVEMENT_SPEED
+        elif key == arcade.key.D:
+            self.player_sprite.change_x += PLAYER_MOVEMENT_SPEED
+        elif key == arcade.key.A:
+            self.player_sprite.change_x += -PLAYER_MOVEMENT_SPEED
+
+        
+
+    def on_key_release(self, key, modifiers):
+        """When a held key is released."""
+
+        if key == arcade.key.S and modifiers == arcade.key.MOD_SHIFT:
+            self.player_sprite.change_y -= -PLAYER_MOVEMENT_SPEED * PLAYER_DASH_MULT
+
+        if key == arcade.key.W:
+            self.player_sprite.change_y -= PLAYER_MOVEMENT_SPEED
+        elif key ==  arcade.key.S:
+            self.player_sprite.change_y -= -PLAYER_MOVEMENT_SPEED
+        elif key ==  arcade.key.D:
+            self.player_sprite.change_x -= PLAYER_MOVEMENT_SPEED
+        elif key ==  arcade.key.A:
+            self.player_sprite.change_x -= -PLAYER_MOVEMENT_SPEED
+
+        
+
+    def on_update(self, delta_time):
+        """Runs the game"""
+
+        self.physics_engine.update()
 
 
 #Functions
