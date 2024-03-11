@@ -3,18 +3,21 @@ Python Assessment game
 """
 
 #Imports
-import arcade
+import arcade, time
 
 #Constants
 SCREEN_WIDTH = 1600
 SCREEN_HEIGHT = 900
 SCREEN_TITLE = "Game"
 PLAYER_MOVEMENT_SPEED = 5
-PLAYER_DASH_MULT = 2
+PLAYER_DASH_SPEED = 15
 
 #Constants for scaling
-CHARACTER_SCALING = 1
-TILE_SCALING = 0.5
+CHARACTER_SCALING = .5
+TILE_SCALING = 0.25
+
+#Lists
+direction = [0, 0]
 
 
 #Class
@@ -35,6 +38,10 @@ class myGame(arcade.Window):
 
         #Physics engine
         self.physics_engine = None
+
+        #Dash ability
+        self.dashing = None
+        self.dash_start = 0
 
         arcade.set_background_color(arcade.csscolor.DIM_GRAY)
 
@@ -63,6 +70,7 @@ class myGame(arcade.Window):
         self.physics_engine = arcade.PhysicsEngineSimple(
             self.player_sprite, self.scene.get_sprite_list("Walls")
         )
+        
 
     def on_draw(self):
         """Renders the screen."""
@@ -75,39 +83,55 @@ class myGame(arcade.Window):
     def on_key_press(self, key, modifiers):
         """When a key is pressed/held down."""
 
-        if key == arcade.key.S and modifiers == arcade.key.MOD_SHIFT:
-            self.player_sprite.change_y += -PLAYER_MOVEMENT_SPEED * PLAYER_DASH_MULT
-
+        if key == arcade.key.SPACE:
+            self.dashing = True
         if key == arcade.key.W:
             self.player_sprite.change_y += PLAYER_MOVEMENT_SPEED
+            direction[0] = 1
         elif key == arcade.key.S:
             self.player_sprite.change_y += -PLAYER_MOVEMENT_SPEED
+            direction[0] = -1
         elif key == arcade.key.D:
             self.player_sprite.change_x += PLAYER_MOVEMENT_SPEED
+            direction[1] = 1
         elif key == arcade.key.A:
             self.player_sprite.change_x += -PLAYER_MOVEMENT_SPEED
+            direction[1] = -1
 
         
 
     def on_key_release(self, key, modifiers):
         """When a held key is released."""
 
-        if key == arcade.key.S and modifiers == arcade.key.MOD_SHIFT:
-            self.player_sprite.change_y -= -PLAYER_MOVEMENT_SPEED * PLAYER_DASH_MULT
-
         if key == arcade.key.W:
             self.player_sprite.change_y -= PLAYER_MOVEMENT_SPEED
+            direction[0] = 0
         elif key ==  arcade.key.S:
             self.player_sprite.change_y -= -PLAYER_MOVEMENT_SPEED
+            direction[0] = 0
         elif key ==  arcade.key.D:
             self.player_sprite.change_x -= PLAYER_MOVEMENT_SPEED
+            direction[1] = 0
         elif key ==  arcade.key.A:
             self.player_sprite.change_x -= -PLAYER_MOVEMENT_SPEED
+            direction[1] = 0
+        
 
         
 
     def on_update(self, delta_time):
         """Runs the game"""
+
+        if self.dashing == True:
+            self.player_sprite.change_y = PLAYER_DASH_SPEED * direction[0]
+            self.player_sprite.change_x = PLAYER_DASH_SPEED * direction[1]
+            self.dash_start += 1
+            if self.dash_start == 20:
+                self.dashing = False
+                self.dash_start = 0
+                if self.dashing == False:
+                    self.player_sprite.change_y = PLAYER_MOVEMENT_SPEED * direction[0]
+                    self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED * direction[1]
 
         self.physics_engine.update()
 
