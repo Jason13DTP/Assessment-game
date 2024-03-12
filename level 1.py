@@ -6,8 +6,8 @@ Python Assessment game
 import arcade, time
 
 #Constants
-SCREEN_WIDTH = 1600
-SCREEN_HEIGHT = 900
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 450
 SCREEN_TITLE = "Game"
 PLAYER_MOVEMENT_SPEED = 5
 PLAYER_DASH_SPEED = 15
@@ -38,6 +38,12 @@ class myGame(arcade.Window):
 
         #Physics engine
         self.physics_engine = None
+
+        #Key pressed
+        self.up_pressed = False
+        self.down_pressed = False
+        self.left_pressed = False
+        self.right_pressed = False
 
         #Dash ability
         self.dashing = None
@@ -80,23 +86,53 @@ class myGame(arcade.Window):
         #Draws the sprites
         self.scene.draw()
 
+
+    def update_player_speed(self):
+        if self.up_pressed and not self.down_pressed:
+            self.player_sprite.change_y = PLAYER_MOVEMENT_SPEED
+            direction[0] = 1
+        elif self.down_pressed and not self.up_pressed:
+            self.player_sprite.change_y = -PLAYER_MOVEMENT_SPEED
+            direction[0] = -1
+        if self.left_pressed and not self.right_pressed:
+            self.player_sprite.change_x = -PLAYER_MOVEMENT_SPEED
+            direction[1] = -1
+        elif self.right_pressed and not self.left_pressed:
+            self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED
+            direction[1] = 1
+
+        if self.right_pressed and self.left_pressed:
+            self.player_sprite.change_x = 0
+            direction[1] = 0
+        if self.up_pressed and self.down_pressed:
+            self.player_sprite.change_y = 0
+            direction[0] = 0
+            
+        if not self.right_pressed and not self.left_pressed:
+            self.player_sprite.change_x = 0
+            direction[1] = 0
+        if not self.up_pressed and not self.down_pressed:
+            self.player_sprite.change_y = 0
+            direction[0] = 0
+
     def on_key_press(self, key, modifiers):
         """When a key is pressed/held down."""
 
         if key == arcade.key.SPACE:
             self.dashing = True
+            
         if key == arcade.key.W:
-            self.player_sprite.change_y += PLAYER_MOVEMENT_SPEED
-            direction[0] = 1
+            self.up_pressed = True
+            self.update_player_speed()
         elif key == arcade.key.S:
-            self.player_sprite.change_y += -PLAYER_MOVEMENT_SPEED
-            direction[0] = -1
+            self.down_pressed = True
+            self.update_player_speed()
         elif key == arcade.key.D:
-            self.player_sprite.change_x += PLAYER_MOVEMENT_SPEED
-            direction[1] = 1
+            self.right_pressed = True
+            self.update_player_speed()
         elif key == arcade.key.A:
-            self.player_sprite.change_x += -PLAYER_MOVEMENT_SPEED
-            direction[1] = -1
+            self.left_pressed = True
+            self.update_player_speed()
 
         
 
@@ -104,17 +140,17 @@ class myGame(arcade.Window):
         """When a held key is released."""
 
         if key == arcade.key.W:
-            self.player_sprite.change_y -= PLAYER_MOVEMENT_SPEED
-            direction[0] = 0
-        elif key ==  arcade.key.S:
-            self.player_sprite.change_y -= -PLAYER_MOVEMENT_SPEED
-            direction[0] = 0
-        elif key ==  arcade.key.D:
-            self.player_sprite.change_x -= PLAYER_MOVEMENT_SPEED
-            direction[1] = 0
-        elif key ==  arcade.key.A:
-            self.player_sprite.change_x -= -PLAYER_MOVEMENT_SPEED
-            direction[1] = 0
+            self.up_pressed = False
+            self.update_player_speed()
+        elif key == arcade.key.S:
+            self.down_pressed = False
+            self.update_player_speed()
+        elif key == arcade.key.D:
+            self.right_pressed = False
+            self.update_player_speed()
+        elif key == arcade.key.A:
+            self.left_pressed = False
+            self.update_player_speed()
         
 
         
@@ -122,11 +158,12 @@ class myGame(arcade.Window):
     def on_update(self, delta_time):
         """Runs the game"""
 
+        #Dashing ability
         if self.dashing == True:
             self.player_sprite.change_y = PLAYER_DASH_SPEED * direction[0]
             self.player_sprite.change_x = PLAYER_DASH_SPEED * direction[1]
             self.dash_start += 1
-            if self.dash_start == 20:
+            if self.dash_start == 10:
                 self.dashing = False
                 self.dash_start = 0
                 if self.dashing == False:
