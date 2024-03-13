@@ -49,6 +49,9 @@ class myGame(arcade.Window):
         self.dashing = None
         self.dash_start = 0
 
+        self.dash_cooldown = 0
+        self.can_dash = None
+
         arcade.set_background_color(arcade.csscolor.DIM_GRAY)
 
     def setup(self):
@@ -138,7 +141,7 @@ class myGame(arcade.Window):
 
     def on_key_release(self, key, modifiers):
         """When a held key is released."""
-
+        
         if key == arcade.key.W:
             self.up_pressed = False
             self.update_player_speed()
@@ -151,27 +154,35 @@ class myGame(arcade.Window):
         elif key == arcade.key.A:
             self.left_pressed = False
             self.update_player_speed()
+
         
 
         
 
     def on_update(self, delta_time):
         """Runs the game"""
-
+        
+        
+        
         #Dashing ability
-        if self.dashing == True:
-            self.player_sprite.change_y = PLAYER_DASH_SPEED * direction[0]
-            self.player_sprite.change_x = PLAYER_DASH_SPEED * direction[1]
-            self.dash_start += 1
-            if self.dash_start == 10:
-                self.dashing = False
-                self.dash_start = 0
-                if self.dashing == False:
-                    self.player_sprite.change_y = PLAYER_MOVEMENT_SPEED * direction[0]
-                    self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED * direction[1]
+        if self.dash_cooldown < 50:
+            self.dash_cooldown += 1
+            if self.dash_cooldown == 50 and self.dashing == True:
+            #if self.dashing == True:
+                self.player_sprite.change_y = PLAYER_DASH_SPEED * direction[0]
+                self.player_sprite.change_x = PLAYER_DASH_SPEED * direction[1]
+                self.dash_start += 1
+                if self.dash_start == 10:
+                    self.dashing = False
+                    self.dash_start = 0
+                    if self.dashing == False:
+                        self.player_sprite.change_y = PLAYER_MOVEMENT_SPEED * direction[0]
+                        self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED * direction[1]
+
+        
 
 
-        print(direction)
+        print(self.dash_cooldown, self.dashing, self.dash_start)
 
         self.physics_engine.update()
 
