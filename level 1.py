@@ -6,8 +6,8 @@ Python Assessment game
 import arcade, time
 
 #Constants
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 450
+SCREEN_WIDTH = 1600
+SCREEN_HEIGHT = 900
 SCREEN_TITLE = "Game"
 PLAYER_MOVEMENT_SPEED = 5
 PLAYER_DASH_SPEED = 15
@@ -169,6 +169,9 @@ class myGame(arcade.Window):
                 if self.dashing == False:
                     self.player_sprite.change_y = PLAYER_MOVEMENT_SPEED * direction[0]
                     self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED * direction[1]
+
+
+        print(direction)
 
         self.physics_engine.update()
 
