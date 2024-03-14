@@ -51,6 +51,9 @@ class myGame(arcade.Window):
 
         self.dash_cooldown = 0
         self.can_dash = None
+        
+        #Dash indicator level
+        self.dash_indicator_level = 0
 
         arcade.set_background_color(arcade.csscolor.DIM_GRAY)
 
@@ -75,6 +78,13 @@ class myGame(arcade.Window):
         self.scene.add_sprite("Player", self.player_sprite)
 
         
+        #Cooldown indicator
+        indicator_img = f"Assets/Dash indicator/Dash_level_{self.dash_indicator_level + 1}.png"
+        self.cooldown_sprite = arcade.Sprite(indicator_img, 2)
+        self.cooldown_sprite.center_x = 1570
+        self.cooldown_sprite.center_y = 30
+        self.scene.add_sprite("Cooldown", self.cooldown_sprite)
+
         #Creates the physics engine
         self.physics_engine = arcade.PhysicsEngineSimple(
             self.player_sprite, self.scene.get_sprite_list("Walls")
@@ -122,7 +132,8 @@ class myGame(arcade.Window):
         """When a key is pressed/held down."""
 
         if key == arcade.key.SPACE:
-            self.dashing = True
+            if self.can_dash == True:
+                self.dashing = True
             
         if key == arcade.key.W:
             self.up_pressed = True
@@ -165,21 +176,27 @@ class myGame(arcade.Window):
         
         
         #Dashing ability
-        if self.dash_cooldown < 50:
-            self.dash_cooldown += 1
-            if self.dash_cooldown == 50 and self.dashing == True:
-            #if self.dashing == True:
-                self.player_sprite.change_y = PLAYER_DASH_SPEED * direction[0]
-                self.player_sprite.change_x = PLAYER_DASH_SPEED * direction[1]
-                self.dash_start += 1
-                if self.dash_start == 10:
-                    self.dashing = False
-                    self.dash_start = 0
-                    if self.dashing == False:
-                        self.player_sprite.change_y = PLAYER_MOVEMENT_SPEED * direction[0]
-                        self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED * direction[1]
+        if self.dashing == True:
+            self.player_sprite.change_y = PLAYER_DASH_SPEED * direction[0]
+            self.player_sprite.change_x = PLAYER_DASH_SPEED * direction[1]
+            self.dash_start += 1
+            if self.dash_start == 10:
+                self.dashing = False
+                self.dash_cooldown = 0
+                self.dash_start = 0
+                if self.dashing == False:
+                    self.player_sprite.change_y = PLAYER_MOVEMENT_SPEED * direction[0]
+                    self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED * direction[1]
 
-        
+        #Dash cooldown
+        if self.dash_cooldown < 300:
+            self.dash_cooldown += 1
+            self.can_dash = False
+            for i in range (1, 6):
+                if self.dash_cooldown == i * 50:
+                    self.dash_indicator_level = i
+        if self.dash_cooldown == 300:
+            self.can_dash = True
 
 
         print(self.dash_cooldown, self.dashing, self.dash_start)
