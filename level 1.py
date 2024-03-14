@@ -11,6 +11,7 @@ SCREEN_HEIGHT = 900
 SCREEN_TITLE = "Game"
 PLAYER_MOVEMENT_SPEED = 5
 PLAYER_DASH_SPEED = 15
+ENEMY_MOVEMENT_SPEED = 2
 
 #Constants for scaling
 CHARACTER_SCALING = .5
@@ -45,10 +46,19 @@ class myGame(arcade.Window):
         self.left_pressed = False
         self.right_pressed = False
 
+        #Player health
+        self.player_max_health = 100
+        self.player_health = 100
+
+        #Enemy health
+        self.enemy_max_health = 20
+        self.enemy_health = 20
+
         #Dash ability
         self.dashing = None
         self.dash_start = 0
 
+        #Dash cooldown
         self.dash_cooldown = 0
         self.can_dash = None
         
@@ -63,11 +73,24 @@ class myGame(arcade.Window):
         #Initializes the scene
         self.scene = arcade.Scene()
 
+        #Sets up the camera
+        self.gui_camera = arcade.Camera(self.width, self.height)
+
         #Creates the sprite lists
         self.scene.add_sprite_list("Player")
         self.scene.add_sprite_list("Enemy")
         self.scene.add_sprite_list("Walls", use_spatial_hash=True)
         
+
+        
+
+        #Enemy sprite
+        enemy_img = ":resources:images/animated_characters/male_adventurer/maleAdventurer_idle.png"
+        self.enemy_sprite = arcade.Sprite(enemy_img, CHARACTER_SCALING)
+        self.enemy_sprite.center_x = 800
+        self.enemy_sprite.center_y = 450
+        self.scene.add_sprite("Enemy", self.enemy_sprite)
+
 
         #Player sprite
         #player_img = "Assets\Images\player.png"
@@ -77,7 +100,7 @@ class myGame(arcade.Window):
         self.player_sprite.center_y = 450
         self.scene.add_sprite("Player", self.player_sprite)
 
-        
+
         #Cooldown indicator
         indicator_img = f"Assets/Dash indicator/Dash_level_{self.dash_indicator_level + 1}.png"
         self.cooldown_sprite = arcade.Sprite(indicator_img, 2)
@@ -91,6 +114,7 @@ class myGame(arcade.Window):
         )
         
 
+
     def on_draw(self):
         """Renders the screen."""
         #clears the existing screen
@@ -98,6 +122,16 @@ class myGame(arcade.Window):
 
         #Draws the sprites
         self.scene.draw()
+
+        #Player health display
+        health_text = f"Health: {self.player_health}/{self.player_max_health}"
+        arcade.draw_text(
+            health_text,
+            10,
+            10,
+            arcade.color.WHITE,
+            18,
+        )
 
 
     def update_player_speed(self):
@@ -199,7 +233,15 @@ class myGame(arcade.Window):
             self.can_dash = True
 
 
-        print(self.dash_cooldown, self.dashing, self.dash_start)
+        if self.enemy_sprite.center_y < self.player_sprite.center_y:
+            self.enemy_sprite.center_y += ENEMY_MOVEMENT_SPEED
+        elif self.enemy_sprite.center_y > self.player_sprite.center_y:
+            self.enemy_sprite.center_y -= ENEMY_MOVEMENT_SPEED
+
+        if self.enemy_sprite.center_x < self.player_sprite.center_x:
+            self.enemy_sprite.center_x += ENEMY_MOVEMENT_SPEED
+        elif self.enemy_sprite.center_x > self.player_sprite.center_x:
+            self.enemy_sprite.center_x -= ENEMY_MOVEMENT_SPEED
 
         self.physics_engine.update()
 
