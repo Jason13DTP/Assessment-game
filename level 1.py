@@ -138,13 +138,7 @@ class myGame(arcade.Window):
 
         #Player health display
         health_text = f"Health: {self.player_health}/{self.player_max_health}"
-        arcade.draw_text(
-            health_text,
-            10,
-            10,
-            arcade.color.WHITE,
-            18,
-        )
+        arcade.draw_text(health_text, 10, 10, arcade.color.WHITE, 18)
 
         #Cooldown indicator
         indicator_img = f"Assets/Dash indicator/Dash_level_{self.dash_indicator_level + 1}.png"
@@ -155,6 +149,7 @@ class myGame(arcade.Window):
 
 
     def update_player_speed(self):
+        """Moves the player according to the direction they are facing"""
         if self.up_pressed and not self.down_pressed:
             self.player_sprite.change_y = PLAYER_MOVEMENT_SPEED
             direction[0] = 1
@@ -228,9 +223,7 @@ class myGame(arcade.Window):
         
 
     def on_update(self, delta_time):
-        """
-        Runs the game
-        """
+        """Runs the game"""
         
         ###DASHING ABILITY###
 
@@ -313,6 +306,7 @@ class myGame(arcade.Window):
             self.knockback = True
             self.invincible = True
         
+        #Sets how far the knockback is going to be
         if self.knockback == True:
             if self.knockback_time < 5:
                 self.player_sprite.center_x += math.cos(angle) * PLAYER_DASH_SPEED
@@ -321,6 +315,7 @@ class myGame(arcade.Window):
             if self.knockback_time == 5:
                 self.knockback = False
 
+        #Sets how long the invincible period is
         if self.invincible == True:
             if self.invincible_time < 60:
                 self.invincible = True
@@ -328,14 +323,6 @@ class myGame(arcade.Window):
             if self.invincible_time == 60:
                 self.invincible = False
                 self.invincible_time = 0
-
-        
-
-        
-
-
-        
-
 
         
         self.physics_engine.update()
