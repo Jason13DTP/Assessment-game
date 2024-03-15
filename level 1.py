@@ -3,7 +3,7 @@ Python Assessment game
 """
 
 #Imports
-import arcade, time
+import arcade, random, math
 
 #Constants
 SCREEN_WIDTH = 1600
@@ -11,7 +11,7 @@ SCREEN_HEIGHT = 900
 SCREEN_TITLE = "Game"
 PLAYER_MOVEMENT_SPEED = 5
 PLAYER_DASH_SPEED = 15
-ENEMY_MOVEMENT_SPEED = 2
+ENEMY_MOVEMENT_SPEED = 1
 
 #Constants for scaling
 CHARACTER_SCALING = .5
@@ -54,6 +54,9 @@ class myGame(arcade.Window):
         self.enemy_max_health = 20
         self.enemy_health = 20
 
+        #Player attack
+        self.player_attack = None
+
         #Dash ability
         self.dashing = None
         self.dash_start = 0
@@ -64,6 +67,9 @@ class myGame(arcade.Window):
         
         #Dash indicator level
         self.dash_indicator_level = 0
+
+        #Time stop ability
+        self.time_stop = None
 
         arcade.set_background_color(arcade.csscolor.DIM_GRAY)
 
@@ -233,16 +239,33 @@ class myGame(arcade.Window):
             self.can_dash = True
 
 
-        if self.enemy_sprite.center_y < self.player_sprite.center_y:
-            self.enemy_sprite.center_y += ENEMY_MOVEMENT_SPEED
-        elif self.enemy_sprite.center_y > self.player_sprite.center_y:
-            self.enemy_sprite.center_y -= ENEMY_MOVEMENT_SPEED
+        #Enemy following player
+        self.enemy_sprite.center_x += self.enemy_sprite.change_x
+        self.enemy_sprite.center_y += self.enemy_sprite.change_y
 
-        if self.enemy_sprite.center_x < self.player_sprite.center_x:
-            self.enemy_sprite.center_x += ENEMY_MOVEMENT_SPEED
-        elif self.enemy_sprite.center_x > self.player_sprite.center_x:
-            self.enemy_sprite.center_x -= ENEMY_MOVEMENT_SPEED
+        start_x = self.enemy_sprite.center_x
+        start_y = self.enemy_sprite.center_y
 
+        dest_x = self.player_sprite.center_x
+        dest_y = self.player_sprite.center_y
+
+        dist_x = int(dest_x - start_x)
+        dist_y = int(dest_y - start_y)
+        angle = math.atan2(dist_y, dist_x)
+        dist_total = int(math.sqrt((dist_x**2 + dist_y**2)))
+
+
+        print(dist_total, dist_x, dist_y)
+
+        if dist_total <= 32 and dist_x != 0 and dist_y != 0:
+            self.enemy_sprite.change_x = 0 
+            self.enemy_sprite.change_y = 0 
+        
+        if self.time_stop != True and abs(dist_x) > 32 and abs(dist_y) > 32:
+            self.enemy_sprite.change_x = math.cos(angle) * ENEMY_MOVEMENT_SPEED
+            self.enemy_sprite.change_y = math.sin(angle) * ENEMY_MOVEMENT_SPEED
+
+        
         self.physics_engine.update()
 
 
