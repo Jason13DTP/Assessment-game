@@ -9,8 +9,11 @@ import arcade, random, math
 SCREEN_WIDTH = 1600
 SCREEN_HEIGHT = 900
 SCREEN_TITLE = "Game"
+
 PLAYER_MOVEMENT_SPEED = 5
 PLAYER_DASH_SPEED = 15
+PLAYER_KNOCKBACK = 30
+
 ENEMY_MOVEMENT_SPEED = 1
 
 #Constants for scaling
@@ -33,6 +36,7 @@ class myGame(arcade.Window):
 
         #Player sprite variable
         self.player_sprite = None
+        self.player_img = None
 
         #Scene
         self.scene = None
@@ -50,26 +54,39 @@ class myGame(arcade.Window):
         self.player_max_health = 100
         self.player_health = 100
 
+        #Player attack
+        self.player_attack = None
+
+        #Player knockback
+        self.knockback = None
+        self.knockback_time = 0
+        self.invincible = None
+        self.invincible_time = 0
+
         #Enemy health
         self.enemy_max_health = 20
         self.enemy_health = 20
 
-        #Player attack
-        self.player_attack = None
+        #Enemy attack
+        self.enemy_attack = 5
+
+        #Enemy following player
+        self.enemy_follow = None
+
 
         #Dash ability
         self.dashing = None
         self.dash_start = 0
 
         #Dash cooldown
-        self.dash_cooldown = 0
+        self.dash_cooldown = -1
         self.can_dash = None
         
         #Dash indicator level
         self.dash_indicator_level = 0
 
         #Time stop ability
-        self.time_stop = None
+        self.time_stop = False
 
         arcade.set_background_color(arcade.csscolor.DIM_GRAY)
 
@@ -87,32 +104,22 @@ class myGame(arcade.Window):
         self.scene.add_sprite_list("Enemy")
         self.scene.add_sprite_list("Walls", use_spatial_hash=True)
         
-
-        
-
         #Enemy sprite
         enemy_img = ":resources:images/animated_characters/male_adventurer/maleAdventurer_idle.png"
         self.enemy_sprite = arcade.Sprite(enemy_img, CHARACTER_SCALING)
-        self.enemy_sprite.center_x = 800
+        self.enemy_sprite.center_x = 400
         self.enemy_sprite.center_y = 450
         self.scene.add_sprite("Enemy", self.enemy_sprite)
 
 
         #Player sprite
         #player_img = "Assets\Images\player.png"
-        player_img = ":resources:images/animated_characters/female_adventurer/femaleAdventurer_idle.png"
-        self.player_sprite = arcade.Sprite(player_img, CHARACTER_SCALING)
+        self.player_img = ":resources:images/animated_characters/female_adventurer/femaleAdventurer_idle.png"
+        self.player_sprite = arcade.Sprite(self.player_img, CHARACTER_SCALING)
         self.player_sprite.center_x = 800
         self.player_sprite.center_y = 450
         self.scene.add_sprite("Player", self.player_sprite)
-
-
-        #Cooldown indicator
-        indicator_img = f"Assets/Dash indicator/Dash_level_{self.dash_indicator_level + 1}.png"
-        self.cooldown_sprite = arcade.Sprite(indicator_img, 2)
-        self.cooldown_sprite.center_x = 1570
-        self.cooldown_sprite.center_y = 30
-        self.scene.add_sprite("Cooldown", self.cooldown_sprite)
+        
 
         #Creates the physics engine
         self.physics_engine = arcade.PhysicsEngineSimple(
@@ -138,6 +145,13 @@ class myGame(arcade.Window):
             arcade.color.WHITE,
             18,
         )
+
+        #Cooldown indicator
+        indicator_img = f"Assets/Dash indicator/Dash_level_{self.dash_indicator_level + 1}.png"
+        self.cooldown_sprite = arcade.Sprite(indicator_img, 2)
+        self.cooldown_sprite.center_x = 1570
+        self.cooldown_sprite.center_y = 30
+        self.scene.add_sprite("Cooldown", self.cooldown_sprite)
 
 
     def update_player_speed(self):
@@ -174,6 +188,9 @@ class myGame(arcade.Window):
         if key == arcade.key.SPACE:
             if self.can_dash == True:
                 self.dashing = True
+        
+        if key == arcade.key.G:
+            self.time_stop = not self.time_stop
             
         if key == arcade.key.W:
             self.up_pressed = True
@@ -211,18 +228,21 @@ class myGame(arcade.Window):
         
 
     def on_update(self, delta_time):
-        """Runs the game"""
+        """
+        Runs the game
+        """
         
-        
-        
+        ###DASHING ABILITY###
+
         #Dashing ability
         if self.dashing == True:
             self.player_sprite.change_y = PLAYER_DASH_SPEED * direction[0]
             self.player_sprite.change_x = PLAYER_DASH_SPEED * direction[1]
             self.dash_start += 1
+            self.dash_indicator_level = 0
             if self.dash_start == 10:
                 self.dashing = False
-                self.dash_cooldown = 0
+                self.dash_cooldown = -1
                 self.dash_start = 0
                 if self.dashing == False:
                     self.player_sprite.change_y = PLAYER_MOVEMENT_SPEED * direction[0]
@@ -232,38 +252,90 @@ class myGame(arcade.Window):
         if self.dash_cooldown < 300:
             self.dash_cooldown += 1
             self.can_dash = False
-            for i in range (1, 6):
-                if self.dash_cooldown == i * 50:
+            for i in range (0, 5):
+                if self.dash_cooldown == i * 60:
                     self.dash_indicator_level = i
         if self.dash_cooldown == 300:
+            self.dash_indicator_level = 5
             self.can_dash = True
 
 
+        ###ENEMY FOLLOWING PLAYER###
+            
         #Enemy following player
         self.enemy_sprite.center_x += self.enemy_sprite.change_x
         self.enemy_sprite.center_y += self.enemy_sprite.change_y
 
+        #Records the enemy's position
         start_x = self.enemy_sprite.center_x
         start_y = self.enemy_sprite.center_y
 
+        #Records the player's position
         dest_x = self.player_sprite.center_x
         dest_y = self.player_sprite.center_y
 
+        #Calculates the x and y distance between the enemy and the player
         dist_x = int(dest_x - start_x)
         dist_y = int(dest_y - start_y)
+        #Using trig to find the angle difference between the player and enemy
         angle = math.atan2(dist_y, dist_x)
-        dist_total = int(math.sqrt((dist_x**2 + dist_y**2)))
 
 
-        print(dist_total, dist_x, dist_y)
+        ###COLLISION###
 
-        if dist_total <= 32 and dist_x != 0 and dist_y != 0:
-            self.enemy_sprite.change_x = 0 
-            self.enemy_sprite.change_y = 0 
-        
-        if self.time_stop != True and abs(dist_x) > 32 and abs(dist_y) > 32:
+        #Checks for collision between the player and enemy
+        if self.invincible != True:
+            enemy_collision = arcade.check_for_collision(self.player_sprite, self.enemy_sprite)
+        else:
+            enemy_collision = False
+
+        #Variable that stops all enemies from following the player
+        if self.time_stop != True:
+            self.enemy_follow = True
+        if self.time_stop == True:
+            self.enemy_follow = False
+
+        #Making the enemy follow the player precicely using trig
+        if self.enemy_follow == True:
             self.enemy_sprite.change_x = math.cos(angle) * ENEMY_MOVEMENT_SPEED
             self.enemy_sprite.change_y = math.sin(angle) * ENEMY_MOVEMENT_SPEED
+        #Stops the enemy if there is collision
+        elif self.enemy_follow == False:
+            self.enemy_sprite.change_x = 0
+            self.enemy_sprite.change_y = 0
+
+        ###KNOCKBACK AND INVINCIBLITY###
+            
+        #Creates player knockback if enemy collides with the player
+        if enemy_collision == True:
+            self.player_health -= self.enemy_attack
+            self.knockback_time = 0
+            self.knockback = True
+            self.invincible = True
+        
+        if self.knockback == True:
+            if self.knockback_time < 5:
+                self.player_sprite.center_x += math.cos(angle) * PLAYER_DASH_SPEED
+                self.player_sprite.center_y += math.sin(angle) * PLAYER_DASH_SPEED
+                self.knockback_time += 1
+            if self.knockback_time == 5:
+                self.knockback = False
+
+        if self.invincible == True:
+            if self.invincible_time < 60:
+                self.invincible = True
+                self.invincible_time += 1
+            if self.invincible_time == 60:
+                self.invincible = False
+                self.invincible_time = 0
+
+        
+
+        
+
+
+        
+
 
         
         self.physics_engine.update()
