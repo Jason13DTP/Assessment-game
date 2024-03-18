@@ -30,7 +30,98 @@ UP_FACING = 3
 direction = [0, 0]
 
 
+#Functions
+def load_texture(filename):
+    """
+    Load a texture pair, with the second being a mirror image.
+    """
+    return arcade.load_texture(filename)
+
+
+
 #Class
+class PlayerCharacter(arcade.Sprite):
+    """Player Sprite"""
+
+    def __init__(self):
+
+        # Set up parent class
+        super().__init__()
+
+        # Default to face-right
+        self.character_face_direction = "right"
+
+        # Used for flipping between image sequences
+        self.cur_texture = 0
+        self.scale = CHARACTER_SCALING
+
+        # Track our state
+        self.jumping = False
+        self.climbing = False
+        self.is_on_ladder = False
+
+        # --- Load Textures ---
+        main_path = "Assets/Images/Monster"
+
+        # Load textures for idle standing
+        for i in range(3):
+            self.idle_texture = load_texture(f"{main_path}/Idle/{direction}_{i+1}.png")
+
+        # Load textures for walking
+        self.walk_textures = []
+        for i in range(5):
+            texture = load_texture(f"{main_path}/Walk/{direction}_{i+1}.png")
+            self.walk_textures.append(texture)
+
+        # Set the initial texture
+        self.texture = self.idle_texture[0]
+
+        # Hit box will be set based on the first image used. If you want to specify
+        # a different hit box, you can do it like the code below.
+        # set_hit_box = [[-22, -64], [22, -64], [22, 28], [-22, 28]]
+        self.hit_box = self.texture.hit_box_points
+
+    def update_animation(self, delta_time: float = 1 / 60):
+
+        if (
+            self.change_x < 0
+            and self.face_direction == "right"
+            and not self.is_attacking
+        ):
+            self.face_direction = "left"
+        elif (
+            self.change_x > 0
+            and self.face_direction == "left"
+            and not self.is_attacking
+        ):
+            self.face_direction = "right"
+        elif (
+            self.change_y < 0
+            and self.face_direction == "up"
+            and not self.is_attacking
+        ):
+            self.face_direction = "down"
+        elif (
+            self.change_y > 0
+            and self.face_direction == "down"
+            and not self.is_attacking
+        ):
+            self.face_direction = "up"
+
+
+        # Idle animation
+        if self.change_x == 0:
+            self.texture = self.idle_texture[self.character_face_direction]
+            return
+
+        # Walking animation
+        self.cur_texture += 1
+        if self.cur_texture > 7:
+            self.cur_texture = 0
+        self.texture = self.walk_textures[self.cur_texture][
+            self.character_face_direction
+        ]
+
 class myGame(arcade.Window):
     """
     Main Class
@@ -162,8 +253,7 @@ class myGame(arcade.Window):
 
         #Player sprite
         #player_img = "Assets\Images\player.png"
-        self.player_img = ":resources:images/animated_characters/female_adventurer/femaleAdventurer_idle.png"
-        self.player_sprite = arcade.Sprite(self.player_img, CHARACTER_SCALING)
+        self.player_sprite = arcade.Sprite(PlayerCharacter, CHARACTER_SCALING)
         self.player_sprite.center_x = 800
         self.player_sprite.center_y = 450
         self.scene.add_sprite("Player", self.player_sprite)
@@ -268,33 +358,9 @@ class myGame(arcade.Window):
 
     def update_animation(self, delta_time: float = 1/60):
 
-        if (
-            self.player_sprite.change_x < 0
-            and self.face_direction == RIGHT_FACING
-            and not self.is_attacking
-        ):
-            self.face_direction = LEFT_FACING
-        elif (
-            self.player_sprite.change_x > 0
-            and self.face_direction == LEFT_FACING
-            and not self.is_attacking
-        ):
-            self.face_direction = RIGHT_FACING  
-        elif (
-            self.player_sprite.change_y < 0
-            and self.face_direction == RIGHT_FACING
-            and not self.is_attacking
-        ):
-            self.face_direction = DOWN_FACING  
-        elif (
-            self.player_sprite.change_y > 0
-            and self.face_direction == RIGHT_FACING
-            and not self.is_attacking
-        ):
-            self.face_direction = UP_FACING
         
 
-        self.cur_textyre += 1
+        self.cur_texture += 1
         if self.cur_txture == 4:
             self.cur_texture = 0
 
