@@ -19,6 +19,12 @@ ENEMY_MOVEMENT_SPEED = 1
 #Constants for scaling
 CHARACTER_SCALING = .5
 TILE_SCALING = 0.25
+SPRITE_PIXEL_SIZE = 128
+
+RIGHT_FACING = 0
+LEFT_FACING = 1
+DOWN_FACING = 2
+UP_FACING = 3
 
 #Lists
 direction = [0, 0]
@@ -87,6 +93,48 @@ class myGame(arcade.Window):
 
         #Time stop ability
         self.time_stop = False
+
+        #Animations
+        self.idle_up_textures = []
+        self.idle_down_textures = []
+        self.idle_left_textures = []
+        self.idle_right_textures = []
+        self.walk_up_textures = []
+        self.walk_down_textures = []
+        self.walk_left_textures = []
+        self.walk_right_textures = []
+
+        self.state = "idle right"
+        self.face_direction = RIGHT_FACING
+
+        self.cur_texture_index = 0
+        self.frame_delay = 5
+        self.is_attacking = False
+
+        for row in range(0, 3):
+            for col in range(0, 3):
+                idle_texture = arcade.load_texture(
+                    "Assets/Spritesheets/Base/Idle_Character.png",
+                    x=col * SPRITE_PIXEL_SIZE,
+                    y=row * SPRITE_PIXEL_SIZE,
+                    width=SPRITE_PIXEL_SIZE,
+                    height=SPRITE_PIXEL_SIZE,   
+                )
+
+                if row == 0:
+                    self.idle_up_textures.append(idle_texture)
+                elif row == 1:
+                    self.idle_left_textures.append(idle_texture)
+                elif row == 2:
+                    self.idle_right_textures.append(idle_texture)
+                elif row == 3:
+                    self.idle_down_textures.append(idle_texture)
+
+        self.texture = self.idle_right_textures[0]             
+
+        self.cur_texture_index = 0
+        self.scale = CHARACTER_SCALING
+
 
         arcade.set_background_color(arcade.csscolor.DIM_GRAY)
 
@@ -218,8 +266,32 @@ class myGame(arcade.Window):
             self.left_pressed = False
             self.update_player_speed()
 
-        
+    def update_animation(self, delta_time: float = 1/60):
 
+        if (
+            self.player_sprite.change_x < 0
+            and self.face_direction == RIGHT_FACING
+            and not self.is_attacking
+        ):
+            self.face_direction = LEFT_FACING
+        elif (
+            self.player_sprite.change_x > 0
+            and self.face_direction == LEFT_FACING
+            and not self.is_attacking
+        ):
+            self.face_direction = RIGHT_FACING  
+        elif (
+            self.player_sprite.change_y < 0
+            and self.face_direction == RIGHT_FACING
+            and not self.is_attacking
+        ):
+            self.face_direction = DOWN_FACING  
+        elif (
+            self.player_sprite.change_y > 0
+            and self.face_direction == RIGHT_FACING
+            and not self.is_attacking
+        ):
+            self.face_direction = UP_FACING
         
 
     def on_update(self, delta_time):
@@ -326,6 +398,7 @@ class myGame(arcade.Window):
 
         
         self.physics_engine.update()
+
 
 
 #Functions
