@@ -18,7 +18,7 @@ ENEMY_MOVEMENT_SPEED = 1
 
 #Constants for scaling
 TILE_SCALING = 0.25
-CHARACTER_SCALING = TILE_SCALING * 2
+CHARACTER_SCALING = 1
 SPRITE_PIXEL_SIZE = 128
 GRID_PIXEL_SIZE = SPRITE_PIXEL_SIZE * TILE_SCALING
 
@@ -83,11 +83,13 @@ class PlayerCharacter(arcade.Sprite):
 
     def update_animation(self, delta_time: float = 1 / 60):
         """Update the animation of the character"""
-
-        if self.change_x < 0 and self.character_face_direction == "right":
+        print("test")
+        if self.change_x < 0:
             self.character_face_direction = "left"
-        elif self.change_x > 0 and self.character_face_direction == "left":
+            print("left")
+        if self.change_x > 0:
             self.character_face_direction = "right"
+            print("right")
         
         
         
@@ -101,7 +103,8 @@ class PlayerCharacter(arcade.Sprite):
         self.cur_texture += 1
         if self.cur_texture > 7:
             self.cur_texture = 0
-        self.cur_texture = self.walk_textures[self.cur_texture][self.character_face_direction]
+            directions = self.character_face_direction
+        self.cur_texture = self.walk_textures[self.cur_texture][directions]
 
 class myGame(arcade.Window):
     """
@@ -133,7 +136,8 @@ class myGame(arcade.Window):
         self.player_health = 100
 
         #Player attack
-        self.player_attack = None
+        self.attack = None
+        self.can_attack = None
 
         #Player knockback
         self.knockback = None
@@ -208,6 +212,7 @@ class myGame(arcade.Window):
 
 
         #Player sprite
+        self.player_list = arcade.SpriteList()
         self.player_sprite = PlayerCharacter()
         self.player_sprite.center_x = PLAYER_START_X
         self.player_sprite.center_y = PLAYER_START_Y
@@ -279,6 +284,10 @@ class myGame(arcade.Window):
         
         if key == arcade.key.G:
             self.time_stop = not self.time_stop
+
+        if key == arcade.key.F:
+            if self.can_attack == True:
+                self.attack = True
             
         if key == arcade.key.W:
             self.up_pressed = True
@@ -313,9 +322,14 @@ class myGame(arcade.Window):
 
     def on_update(self, delta_time):
         """Runs the game"""
-
-        print(PlayerCharacter().character_face_direction)
         
+
+        ###ATTACK###
+
+        if self.attack == True:
+            
+
+
         ###DASHING ABILITY###
 
         #Dashing ability
@@ -415,11 +429,6 @@ class myGame(arcade.Window):
                 self.invincible = False
                 self.invincible_time = 0
 
-        
-        #Updates animation
-            self.scene.update_animation(
-                delta_time, ["Player", "Enemy", "Walls"]
-            )
 
         self.physics_engine.update()
 
