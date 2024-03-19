@@ -17,7 +17,7 @@ PLAYER_KNOCKBACK = 30
 ENEMY_MOVEMENT_SPEED = 1
 
 #Constants for scaling
-CHARACTER_SCALING = .5
+CHARACTER_SCALING = 2
 TILE_SCALING = 0.25
 SPRITE_PIXEL_SIZE = 128
 
@@ -44,83 +44,163 @@ class PlayerCharacter(arcade.Sprite):
     """Player Sprite"""
 
     def __init__(self):
-
-        # Set up parent class
         super().__init__()
+        # Set initial position
+        self.center_x = SCREEN_WIDTH // 2
+        self.center_y = SCREEN_HEIGHT // 2
 
-        # Default to face-right
-        self.character_face_direction = "right"
+        # Initialize animations
+        self.idle_right_textures = []
+        self.idle_left_textures = []
+        self.idle_down_textures = []
+        self.idle_up_textures = []
+        self.walk_right_textures = []
+        self.walk_left_textures = []
+        self.attack_right_textures = []
+        self.attack_left_textures = []
+        self.follow_up_attack_right_textures = []
+        self.follow_up_attack_left_textures = []
+        self.attack_down_textures = []
+        self.follow_up_attack_down_textures = []
+        self.attack_up_textures = []
+        self.follow_up_attack_up_textures = []
 
-        # Used for flipping between image sequences
-        self.cur_texture = 0
+        self.state = "stand_right"
+        self._face_direction = RIGHT_FACING
+        # Initialize frame counter
+        self.cur_texture_index = 0
+        self.frame_delay = 5
+        self.is_attacking = False
+
+        # Load individual frames from spritesheet
+        for row in range(0, 3):
+            for col in range(0, 3):
+                idle_texture = arcade.load_texture(
+                    "Assets/Spritesheets/Base/Idle_character.png",
+                    x=col * SPRITE_PIXEL_SIZE,
+                    y=row * SPRITE_PIXEL_SIZE,
+                    width=SPRITE_PIXEL_SIZE,
+                    height=SPRITE_PIXEL_SIZE,
+                )
+                
+                if row == 0:
+                    self.idle_down_textures.append(idle_texture)
+                elif row == 1:
+                    self.idle_left_textures.append(idle_texture)
+                elif row == 2:
+                    self.idle_right_textures.append(idle_texture)
+                elif row == 3:
+                    self.idle_up_textures.append(idle_texture)
+
+
+        # Set default texture
+        self.texture = self.idle_right_textures[0]
+
+        # Initialize variables for animation
+        self.cur_texture_index = 0
         self.scale = CHARACTER_SCALING
 
-        # Track our state
-        self.jumping = False
-        self.climbing = False
-        self.is_on_ladder = False
-
-        # --- Load Textures ---
-        main_path = "Assets/Images/Monster"
-
-        # Load textures for idle standing
-        for i in range(3):
-            self.idle_texture = load_texture(f"{main_path}/Idle/{direction}_{i+1}.png")
-
-        # Load textures for walking
-        self.walk_textures = []
-        for i in range(5):
-            texture = load_texture(f"{main_path}/Walk/{direction}_{i+1}.png")
-            self.walk_textures.append(texture)
-
-        # Set the initial texture
-        self.texture = self.idle_texture[0]
-
-        # Hit box will be set based on the first image used. If you want to specify
-        # a different hit box, you can do it like the code below.
-        # set_hit_box = [[-22, -64], [22, -64], [22, 28], [-22, 28]]
-        self.hit_box = self.texture.hit_box_points
-
     def update_animation(self, delta_time: float = 1 / 60):
+        """Update the animation of the character"""
 
         if (
             self.change_x < 0
-            and self.face_direction == "right"
+            and self._face_direction == RIGHT_FACING
             and not self.is_attacking
         ):
-            self.face_direction = "left"
+            self._face_direction = LEFT_FACING
         elif (
             self.change_x > 0
-            and self.face_direction == "left"
+            and self._face_direction == LEFT_FACING
             and not self.is_attacking
         ):
-            self.face_direction = "right"
-        elif (
-            self.change_y < 0
-            and self.face_direction == "up"
-            and not self.is_attacking
-        ):
-            self.face_direction = "down"
-        elif (
-            self.change_y > 0
-            and self.face_direction == "down"
-            and not self.is_attacking
-        ):
-            self.face_direction = "up"
-
+            self._face_direction = RIGHT_FACING
+        if self.change_y < 0 and not self.is_attacking:
+            self.vertical_direction = DOWN_FACING
+        elif self.change_y > 0 and not self.is_attacking:
+            self.vertical_direction = UP_FACING
+        elif self.change_y == 0 and not self.is_attacking:
+            self.vertical_direction = None
 
         # Idle animation
-        if self.change_x == 0:
-            self.texture = self.idle_texture[self.character_face_direction]
-            return
+        if self.cur_texture_index % self.frame_delay == 0:
+            if self.change_x == 0 and self.change_y == 0:
+                if self._face_direction == RIGHT_FACING:
+                    self.state = "stand_right"
+                    self.texture = self.stand_right_textures[
+                        self.cur_texture_index // self.frame_delay
+                    ]
+                else:
+                    self.state = "stand_left"
+                    self.texture = self.stand_left_textures[
+                        self.cur_texture_index // self.frame_delay
+                    ]
+            # Update animation based on state
+            elif (
+                self.change_y > 0
+                or self.change_y < 0
+                or self.change_x > 0
+                or self.change_x < 0
+            ):
+                if self._face_direction == RIGHT_FACING:
+                    self.state = "walk_right"
+                    self.texture = self.walk_right_textures[
+                        self.cur_texture_index // self.frame_delay
+                    ]
+                else:
+                    self.state = "walk_left"
+                    self.texture = self.walk_left_textures[
+                        self.cur_texture_index // self.frame_delay
+                    ]
+            if self.is_attacking:
+                print(self.center_x, self.center_y)
+                if self.vertical_direction == DOWN_FACING:
+                    self.state = "attack_down"
+                    self.texture = self.attack_down_textures[
+                        self.cur_texture_index // self.frame_delay
+                    ]
+                elif self.vertical_direction == UP_FACING:
+                    self.state = "attack_up"
+                    self.texture = self.attack_up_textures[
+                        self.cur_texture_index // self.frame_delay
+                    ]
+                else:
+                    if self._face_direction == RIGHT_FACING:
+                        self.state = "attack_right"
+                        self.texture = self.attack_right_textures[
+                            self.cur_texture_index // self.frame_delay
+                        ]
+                    elif self._face_direction == LEFT_FACING:
+                        self.state = "attack_left"
+                        self.texture = self.attack_left_textures[
+                            self.cur_texture_index // self.frame_delay
+                        ]
+                print(self.cur_texture_index // self.frame_delay)
+            elif self.state == "follow_up_attack_right":
+                self.texture = self.follow_up_attack_right_textures[
+                    self.cur_texture_index // self.frame_delay
+                ]
+            elif self.state == "follow_up_attack_down":
+                self.texture = self.follow_up_attack_down_textures[
+                    self.cur_texture_index // self.frame_delay
+                ]
+            elif self.state == "follow_up_attack_up":
+                self.texture = self.follow_up_attack_up_textures[
+                    self.cur_texture_index // self.frame_delay
+                ]
+        # Increment frame counter
+        self.cur_texture_index += 1
+        if self.cur_texture_index == len(self.stand_right_textures) * self.frame_delay:
+            self.cur_texture_index = 0
+            self.is_attacking = False
 
-        # Walking animation
-        self.cur_texture += 1
-        if self.cur_texture > 7:
-            self.cur_texture = 0
-        self.texture = self.walk_textures[self.cur_texture][
-            self.character_face_direction
-        ]
+    def take_damage(self, damage):
+        self.health -= damage
+        if self.health <= 0:
+            self.game_over()
+
+    def game_over(self):
+        print("Game Over")
 
 class myGame(arcade.Window):
     """
@@ -202,30 +282,6 @@ class myGame(arcade.Window):
         self.frame_delay = 5
         self.is_attacking = False
 
-        for row in range(0, 3):
-            for col in range(0, 3):
-                idle_texture = arcade.load_texture(
-                    "Assets/Spritesheets/Base/Idle_Character.png",
-                    x=col * SPRITE_PIXEL_SIZE,
-                    y=row * SPRITE_PIXEL_SIZE,
-                    width=SPRITE_PIXEL_SIZE,
-                    height=SPRITE_PIXEL_SIZE,   
-                )
-
-                if row == 0:
-                    self.idle_up_textures.append(idle_texture)
-                elif row == 1:
-                    self.idle_left_textures.append(idle_texture)
-                elif row == 2:
-                    self.idle_right_textures.append(idle_texture)
-                elif row == 3:
-                    self.idle_down_textures.append(idle_texture)
-
-        self.texture = self.idle_right_textures[0]             
-
-        self.cur_texture_index = 0
-        self.scale = CHARACTER_SCALING
-
 
         arcade.set_background_color(arcade.csscolor.DIM_GRAY)
 
@@ -253,7 +309,7 @@ class myGame(arcade.Window):
 
         #Player sprite
         #player_img = "Assets\Images\player.png"
-        self.player_sprite = arcade.Sprite(PlayerCharacter, CHARACTER_SCALING)
+        self.player_sprite = PlayerCharacter()
         self.player_sprite.center_x = 800
         self.player_sprite.center_y = 450
         self.scene.add_sprite("Player", self.player_sprite)
