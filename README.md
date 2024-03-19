@@ -2,6 +2,8 @@
 
 To do list
 
-- Add cooldown for dash
 - Add border around map
-- 
+- Add map
+- Add list for enemy sprites
+- Randomize enemy spawning
+- Add attacking system
