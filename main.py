@@ -3,29 +3,29 @@ Python Assessment game
 """
 
 #Imports
-import arcade, random, math
+import arcade, random, math, os
 
 #Constants
 SCREEN_WIDTH = 1024
-SCREEN_HEIGHT = 1024
+SCREEN_HEIGHT = 768
 SCREEN_TITLE = "Game"
 
 VIEWPORT_MARGIN = 40
 
-PLAYER_MOVEMENT_SPEED = 5
-PLAYER_DASH_SPEED = 15
-PLAYER_KNOCKBACK = 30
+PLAYER_MOVEMENT_SPEED = 1
+PLAYER_DASH_SPEED = 3
+PLAYER_KNOCKBACK = 6
 
-ENEMY_MOVEMENT_SPEED = 1
+ENEMY_MOVEMENT_SPEED = 0.5
 
 #Constants for scaling
-TILE_SCALING = 0.25
+TILE_SCALING = 0.1
 CHARACTER_SCALING = 1
 SPRITE_PIXEL_SIZE = 128
 GRID_PIXEL_SIZE = SPRITE_PIXEL_SIZE * TILE_SCALING
 
-PLAYER_START_X = SPRITE_PIXEL_SIZE * TILE_SCALING * 2
-PLAYER_START_Y = SPRITE_PIXEL_SIZE * TILE_SCALING * 1
+PLAYER_START_X = SCREEN_WIDTH / 2
+PLAYER_START_Y = SCREEN_HEIGHT / 2
 
 RIGHT_FACING = 0
 LEFT_FACING = 1
@@ -33,80 +33,110 @@ LEFT_FACING = 1
 #UP_FACING = 3
 
 LAYER_NAME_PLAYER = "Player"
+LAYER_NAME_ENEMIES = "Enemy"
+LAYER_NAME_WALLS = "Wall"
 
 #Lists
 direction = [0, 0]
 
 
 #Functions
-def load_texture(filename):
-    """
-    Load a texture pair, with the second being a mirror image.
-    """
-    return arcade.load_texture(filename)
 
-
+def load_texture_pair(filename):
+    """Loads a texture pair"""
+    return [
+        arcade.load_texture(filename),
+        arcade.load_texture(filename, flipped_horizontally=True)
+    ]
 
 #Class
-class PlayerCharacter(arcade.Sprite):
-    """Player Sprite"""
-
-    def __init__(self):
-
-        #Sets up parent class
+class Entity(arcade.Sprite):
+    def __init__(self, name_folder):
         super().__init__()
 
-        #Default facing direction
         self.character_face_direction = "right"
 
-        # Set initial position
-        self.center_x = SCREEN_WIDTH // 2
-        self.center_y = SCREEN_HEIGHT // 2
-
-        #Used for flipping between image sequences
         self.cur_texture = 0
         self.scale = CHARACTER_SCALING
 
-        main_path = "Assets/Images/Player"
-
-        #Load texture for idle standing
-        self.idle_texture = []
-        for i in range (3):
-            texture = load_texture(f"{main_path}/Idle/{self.character_face_direction}_{i}.png")
-            self.idle_texture.append(texture)
+        main_path = f"Assets/Images/{name_folder}"
+        
+        self.idle_textures = []
+        for i in range(3):
+            texture = load_texture_pair(f"{main_path}/idle_{i}.png")
+            self.idle_textures.append(texture)
 
         self.walk_textures = []
         for i in range(5):
-            texture = load_texture(f"{main_path}/Move/{self.character_face_direction}_{i}.png")
+            texture = load_texture_pair(f"{main_path}/walk_{i}.png")
             self.walk_textures.append(texture)
-
-        #Set the initial texture
-            self.texture = self.idle_texture[0]
-
-    def update_animation(self, delta_time: float = 1 / 60):
-        """Update the animation of the character"""
-        print("test")
-        if self.change_x < 0:
-            self.character_face_direction = "left"
-            print("left")
-        if self.change_x > 0:
-            self.character_face_direction = "right"
-            print("right")
         
-        
+        init_texture = arcade.load_texture(f"{main_path}/idle_0.png")
+        self.set_hit_box(init_texture.hit_box_points)
+
+
+class PlayerCharacter(Entity):
+    """Player Sprite"""
+
+    def __init__(self, name_folder):
+
+        #Sets up parent class
+        super().__init__(name_folder="Player")
+
+    def update_animations(self, delta_time: float = 1 / 60):
+        # Figure out if we need to flip face left or right
+        if self.change_x < 0 and self.facing_direction == RIGHT_FACING:
+            self.facing_direction = LEFT_FACING
+        elif self.change_x > 0 and self.facing_direction == LEFT_FACING:
+            self.facing_direction = RIGHT_FACING
         
         # Idle animation
-        
         if self.change_x == 0:
-            self.texture = self.idle_texture[self.character_face_direction]
+            self.cur_texture += 1
+            if self.cur_texture > 7:
+                self.cur_texture = 0
+            self.texture = self.idle_textures[self.cur_texture][self.facing_direction]
 
-
-        #Walking animation
+        # Walking animation
         self.cur_texture += 1
         if self.cur_texture > 7:
             self.cur_texture = 0
-            directions = self.character_face_direction
-        self.cur_texture = self.walk_textures[self.cur_texture][directions]
+        self.texture = self.walk_textures[self.cur_texture][self.facing_direction]
+
+
+class Enemy(Entity):
+    """Enemy Sprite"""
+
+    def __init__(self, name_folder):
+
+        #Sets up parent class
+        super().__init__(name_folder="Enemy")
+
+        self.should_update_walk = 0
+
+    def update_animations(self, delta_time: float = 1 / 60):
+        if self.change_x < 0 and self.facing_direction == RIGHT_FACING:
+            self.facing_direction = LEFT_FACING
+        elif self.change_x > 0 and self.facing_direction == LEFT_FACING:
+            self.facing_direction = RIGHT_FACING
+        
+        if self.change_x == 0:
+            self.cur_texture += 1
+            if self.cur_texture > 7:
+                self.cur_texture = 0
+            self.texture = self.idle_textures[self.cur_texture][self.facing_direction]
+
+        # Walking animation
+        if self.should_update_walk == 3:
+            self.cur_texture += 1
+            if self.cur_texture > 7:
+                self.cur_texture = 0
+            self.texture = self.walk_textures[self.cur_texture][self.facing_direction]
+            self.should_update_walk = 0
+            return
+
+        self.should_update_walk += 1
+    
 
 class myGame(arcade.Window):
     """
@@ -115,11 +145,16 @@ class myGame(arcade.Window):
 
     def __init__(self):
         # Call the parent class and set up the window
-        super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+        super().__init__(
+            SCREEN_WIDTH, 
+            SCREEN_HEIGHT, 
+            SCREEN_TITLE, 
+            center_window = True
+            )
+        
+        file_path = os.path.dirname(os.path.abspath(__file__))
+        os.chdir(file_path)
 
-        #Player sprite variable
-        self.player_sprite = None
-        self.player_img = None
 
         #Scene
         self.scene = None
@@ -129,6 +164,10 @@ class myGame(arcade.Window):
 
         #Physics engine
         self.physics_engine = None
+
+        self.end_of_map = 0
+
+        self.score = 0
 
         #Key pressed
         self.up_pressed = False
@@ -143,6 +182,20 @@ class myGame(arcade.Window):
         #Player attack
         self.attack = None
         self.can_attack = None
+
+        #Dash ability
+        self.dashing = None
+        self.dash_start = 0
+
+        #Dash cooldown
+        self.dash_cooldown = -1
+        self.can_dash = None
+        
+        #Dash indicator level
+        self.dash_indicator_level = 0
+
+        #Time stop ability
+        self.time_stop = False
 
         #Player knockback
         self.knockback = None
@@ -160,86 +213,48 @@ class myGame(arcade.Window):
         #Enemy following player
         self.enemy_follow = None
 
-
-        #Dash ability
-        self.dashing = None
-        self.dash_start = 0
-
-        #Dash cooldown
-        self.dash_cooldown = -1
-        self.can_dash = None
-        
-        #Dash indicator level
-        self.dash_indicator_level = 0
-
-        #Time stop ability
-        self.time_stop = False
-
-        #Animations
-        self.idle_up_textures = []
-        self.idle_down_textures = []
-        self.idle_left_textures = []
-        self.idle_right_textures = []
-        self.walk_up_textures = []
-        self.walk_down_textures = []
-        self.walk_left_textures = []
-        self.walk_right_textures = []
-
-        self.face_direction = RIGHT_FACING
-
-        self.cur_texture_index = 0
-        self.frame_delay = 5
-        self.is_attacking = False
-
-
         arcade.set_background_color(arcade.csscolor.DIM_GRAY)
 
     def setup(self):
         """Sets up / restarts the game."""
 
-        
-
         #Set up map
         map_name = "Assets/level1.tmx"
         
         layer_options = {
-            "Walls": {
+            "Wall": {
                 "use_spatial_hash": True,
             },
+            "Ground": {
+                "use_spatial_hash": False,
+            }
         }
 
+        #Load in tile map
         self.tile_map = arcade.load_tilemap(map_name, TILE_SCALING, layer_options)
 
         #Initializes the scene
         self.scene = arcade.Scene.from_tilemap(self.tile_map)
 
-        #Sets up the camera
-        self.gui_camera = arcade.Camera(self.width, self.height)
+        self.score = 0
 
-        #Creates the sprite lists
-        self.scene.add_sprite_list("Player")
-        self.scene.add_sprite_list("Enemy")
-        self.scene.add_sprite_list("Walls", use_spatial_hash=True)
-        
-        #Enemy sprite
-        enemy_img = ":resources:images/animated_characters/male_adventurer/maleAdventurer_idle.png"
-        self.enemy_sprite = arcade.Sprite(enemy_img, CHARACTER_SCALING)
-        self.enemy_sprite.center_x = 400
-        self.enemy_sprite.center_y = 450
-        self.scene.add_sprite("Enemy", self.enemy_sprite)
+        # Calculate the right edge of the my_map in pixels
+        self.end_of_map = self.tile_map.width * GRID_PIXEL_SIZE
 
+        self.player_sprite = PlayerCharacter("Player")
+        self.player_sprite.center_x = 64
+        self.player_sprite.center_y = 128
+        self.scene.add_sprite(LAYER_NAME_PLAYER, self.player_sprite)
 
-        #Player sprite
-        self.player_list = arcade.SpriteList()
-        self.player_sprite = PlayerCharacter()
-        self.player_sprite.center_x = PLAYER_START_X
-        self.player_sprite.center_y = PLAYER_START_Y
-        self.scene.add_sprite("Player", self.player_sprite)
-        
+        enemy = Enemy("Enemy")
+        enemy.center_x = 120
+        enemy.center_y = 120
+        self.scene.add_sprite(LAYER_NAME_ENEMIES, enemy)
 
         #Creates the physics engine
         self.physics_engine = arcade.PhysicsEngineSimple(
-            self.player_sprite, self.scene.get_sprite_list("Walls")
+            self.player_sprite,
+            walls = self.scene[LAYER_NAME_WALLS],
         )
         
 
@@ -259,7 +274,7 @@ class myGame(arcade.Window):
         #Cooldown indicator
         indicator_img = f"Assets/Dash indicator/Dash_level_{self.dash_indicator_level + 1}.png"
         self.cooldown_sprite = arcade.Sprite(indicator_img, 2)
-        self.cooldown_sprite.center_x = 1570
+        self.cooldown_sprite.center_x = SCREEN_WIDTH
         self.cooldown_sprite.center_y = 30
         self.scene.add_sprite("Cooldown", self.cooldown_sprite)
 
@@ -341,6 +356,7 @@ class myGame(arcade.Window):
     def on_update(self, delta_time):
         """Runs the game"""
         
+        print(self.player_sprite.center_x, self.player_sprite.center_y)
 
         ###ATTACK###
 
@@ -379,73 +395,75 @@ class myGame(arcade.Window):
         ###ENEMY FOLLOWING PLAYER###
             
         #Enemy following player
-        self.enemy_sprite.center_x += self.enemy_sprite.change_x
-        self.enemy_sprite.center_y += self.enemy_sprite.change_y
+        for enemy in self.scene[LAYER_NAME_ENEMIES]:
+            enemy.center_x += enemy.change_x
+            enemy.center_y += enemy.change_y
 
-        #Records the enemy's position
-        start_x = self.enemy_sprite.center_x
-        start_y = self.enemy_sprite.center_y
+            #Records the enemy's position
+            start_x = enemy.center_x
+            start_y = enemy.center_y
 
-        #Records the player's position
-        dest_x = self.player_sprite.center_x
-        dest_y = self.player_sprite.center_y
+            #Records the player's position
+            dest_x = self.player_sprite.center_x
+            dest_y = self.player_sprite.center_y
 
-        #Calculates the x and y distance between the enemy and the player
-        dist_x = int(dest_x - start_x)
-        dist_y = int(dest_y - start_y)
-        #Using trig to find the angle difference between the player and enemy
-        angle = math.atan2(dist_y, dist_x)
+            #Calculates the x and y distance between the enemy and the player
+            dist_x = int(dest_x - start_x)
+            dist_y = int(dest_y - start_y)
+            #Using trig to find the angle difference between the player and enemy
+            angle = math.atan2(dist_y, dist_x)
 
 
-        ###COLLISION###
+            ###COLLISION###
 
-        #Checks for collision between the player and enemy
-        if self.invincible != True:
-            enemy_collision = arcade.check_for_collision(self.player_sprite, self.enemy_sprite)
-        else:
-            enemy_collision = False
+            #Checks for collision between the player and enemy
+            if self.invincible != True:
+                enemy_collision = arcade.check_for_collision(
+                    self.player_sprite, enemy)
+            else:
+                enemy_collision = False
 
-        #Variable that stops all enemies from following the player
-        if self.time_stop != True:
-            self.enemy_follow = True
-        if self.time_stop == True:
-            self.enemy_follow = False
+            #Variable that stops all enemies from following the player
+            if self.time_stop != True:
+                self.enemy_follow = True
+            if self.time_stop == True:
+                self.enemy_follow = False
 
-        #Making the enemy follow the player precicely using trig
-        if self.enemy_follow == True:
-            self.enemy_sprite.change_x = math.cos(angle) * ENEMY_MOVEMENT_SPEED
-            self.enemy_sprite.change_y = math.sin(angle) * ENEMY_MOVEMENT_SPEED
-        #Stops the enemy if there is collision
-        elif self.enemy_follow == False:
-            self.enemy_sprite.change_x = 0
-            self.enemy_sprite.change_y = 0
+            #Making the enemy follow the player precicely using trig
+            if self.enemy_follow == True:
+                enemy.change_x = math.cos(angle) * ENEMY_MOVEMENT_SPEED
+                enemy.change_y = math.sin(angle) * ENEMY_MOVEMENT_SPEED
+            #Stops the enemy if there is collision
+            elif self.enemy_follow == False:
+                enemy.change_x = 0
+                enemy.change_y = 0
 
-        ###KNOCKBACK AND INVINCIBLITY###
-            
-        #Creates player knockback if enemy collides with the player
-        if enemy_collision == True:
-            self.player_health -= self.enemy_attack
-            self.knockback_time = 0
-            self.knockback = True
-            self.invincible = True
-        
-        #Sets how far the knockback is going to be
-        if self.knockback == True:
-            if self.knockback_time < 5:
-                self.player_sprite.center_x += math.cos(angle) * PLAYER_DASH_SPEED
-                self.player_sprite.center_y += math.sin(angle) * PLAYER_DASH_SPEED
-                self.knockback_time += 1
-            if self.knockback_time == 5:
-                self.knockback = False
-
-        #Sets how long the invincible period is
-        if self.invincible == True:
-            if self.invincible_time < 60:
+            ###KNOCKBACK AND INVINCIBLITY###
+                
+            #Creates player knockback if enemy collides with the player
+            if enemy_collision == True:
+                self.player_health -= self.enemy_attack
+                self.knockback_time = 0
+                self.knockback = True
                 self.invincible = True
-                self.invincible_time += 1
-            if self.invincible_time == 60:
-                self.invincible = False
-                self.invincible_time = 0
+            
+            #Sets how far the knockback is going to be
+            if self.knockback == True:
+                if self.knockback_time < 5:
+                    self.player_sprite.center_x += math.cos(angle) * PLAYER_DASH_SPEED
+                    self.player_sprite.center_y += math.sin(angle) * PLAYER_DASH_SPEED
+                    self.knockback_time += 1
+                if self.knockback_time == 5:
+                    self.knockback = False
+
+            #Sets how long the invincible period is
+            if self.invincible == True:
+                if self.invincible_time < 60:
+                    self.invincible = True
+                    self.invincible_time += 1
+                if self.invincible_time == 60:
+                    self.invincible = False
+                    self.invincible_time = 0
 
 
         self.physics_engine.update()

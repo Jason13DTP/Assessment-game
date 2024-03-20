@@ -1,14 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.9" tiledversion="1.9.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="128" tileheight="128" infinite="0" nextlayerid="4" nextobjectid="1">
- <tileset firstgid="1" source="../../myGame/Tileset.tsx"/>
- <layer id="1" name="Ground" width="32" height="32">
+<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="80" height="60" tilewidth="128" tileheight="128" infinite="0" nextlayerid="5" nextobjectid="4">
+ <tileset firstgid="1" source="Tileset.tsx"/>
+ <layer id="1" name="Ground" width="80" height="60">
   <data encoding="base64" compression="zlib">
-   eJzt0aERAAAIA7Fe9x+aLUAQEf3im6TAS9E/fwAAAFsG3rEH+w==
+   eJztzrENAAAIA6Cm/x/tD06aMLDTJGUlBw4AAAAAAAAAAAAAAAAAAAAAAADfDJTaJX8=
   </data>
  </layer>
- <layer id="3" name="Wall" width="32" height="32">
+ <layer id="3" name="Wall" width="80" height="60">
   <data encoding="base64" compression="zlib">
-   eJztzTENAAAMw7DiKH+gY7E+jpTbTdLxq/h8Pp/P5/P5fD6fz//0lx/vDAyZ
+   eJzt3DENAEAMw8DiKH+gP/5er3dSCBhAdmbW0rjRr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a+5/hXZ3wPspRwJ
   </data>
  </layer>
+ <objectgroup id="4" name="Enemy">
+  <object id="1" x="2700" y="2090">
+   <point/>
+  </object>
+  <object id="2" x="2320" y="3970">
+   <point/>
+  </object>
+  <object id="3" x="1760" y="5580">
+   <point/>
+  </object>
+ </objectgroup>
 </map>
