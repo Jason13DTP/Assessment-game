@@ -3,7 +3,7 @@ Python Assessment game
 """
 
 #Imports
-import arcade, random, math, os
+import arcade, random, math, os, arcade.gui
 
 #Constants
 SCREEN_WIDTH = 1024
@@ -12,9 +12,9 @@ SCREEN_TITLE = "Game"
 
 VIEWPORT_MARGIN = 40
 
-PLAYER_MOVEMENT_SPEED = 1
-PLAYER_DASH_SPEED = 3
-PLAYER_KNOCKBACK = 6
+PLAYER_MOVEMENT_SPEED = 2
+PLAYER_DASH_SPEED = 6
+KNOCKBACK = 12
 
 ENEMY_MOVEMENT_SPEED = 0.5
 
@@ -35,6 +35,7 @@ LEFT_FACING = 1
 LAYER_NAME_PLAYER = "Player"
 LAYER_NAME_ENEMIES = "Enemy"
 LAYER_NAME_WALLS = "Wall"
+LAYER_NAME_ATTACK = "Attack"
 
 #Lists
 direction = [0, 0]
@@ -51,12 +52,14 @@ def load_texture_pair(filename):
 
 #Class
 class Entity(arcade.Sprite):
+    
     def __init__(self, name_folder):
         super().__init__()
 
-        self.character_face_direction = "right"
-
+        self.facing_direction = RIGHT_FACING
         self.cur_texture = 0
+        self.frame_time = 10
+        self.next_frame = 0
         self.scale = CHARACTER_SCALING
 
         main_path = f"Assets/Images/{name_folder}"
@@ -67,41 +70,50 @@ class Entity(arcade.Sprite):
             self.idle_textures.append(texture)
 
         self.walk_textures = []
-        for i in range(5):
+        for i in range(0, 6):
             texture = load_texture_pair(f"{main_path}/walk_{i}.png")
             self.walk_textures.append(texture)
         
         init_texture = arcade.load_texture(f"{main_path}/idle_0.png")
         self.set_hit_box(init_texture.hit_box_points)
 
+        self.texture = self.walk_textures[0][0]
+
 
 class PlayerCharacter(Entity):
     """Player Sprite"""
-
     def __init__(self, name_folder):
-
         #Sets up parent class
         super().__init__(name_folder="Player")
 
-    def update_animations(self, delta_time: float = 1 / 60):
-        # Figure out if we need to flip face left or right
-        if self.change_x < 0 and self.facing_direction == RIGHT_FACING:
-            self.facing_direction = LEFT_FACING
-        elif self.change_x > 0 and self.facing_direction == LEFT_FACING:
-            self.facing_direction = RIGHT_FACING
         
-        # Idle animation
-        if self.change_x == 0:
-            self.cur_texture += 1
-            if self.cur_texture > 7:
-                self.cur_texture = 0
-            self.texture = self.idle_textures[self.cur_texture][self.facing_direction]
+        
+    def update_animation(self, delta_time: float = 1 / 60):
+        # Figure out if we need to flip face left or right
+        if self.change_x > 0 and self.facing_direction == RIGHT_FACING:
+            self.facing_direction = LEFT_FACING
+        elif self.change_x < 0 and self.facing_direction == LEFT_FACING:
+            self.facing_direction = RIGHT_FACING
 
-        # Walking animation
-        self.cur_texture += 1
-        if self.cur_texture > 7:
-            self.cur_texture = 0
-        self.texture = self.walk_textures[self.cur_texture][self.facing_direction]
+        # Idle animation
+        if self.change_x == 0 and self.change_y == 0:
+            self.next_frame += 1
+            if self.next_frame == self.frame_time:
+                self.cur_texture += 1
+                if self.cur_texture > 2:
+                    self.cur_texture = 0
+                self.texture = self.idle_textures[self.cur_texture][self.facing_direction]
+                self.next_frame = 0
+        else:
+            # Walking animation
+            self.next_frame += 1
+            if self.next_frame == self.frame_time:
+                self.cur_texture += 1
+                if self.cur_texture > 5:
+                    self.cur_texture = 0
+                self.texture = self.walk_textures[self.cur_texture][self.facing_direction]
+                self.next_frame = 0
+            
 
 
 class Enemy(Entity):
@@ -112,46 +124,99 @@ class Enemy(Entity):
         #Sets up parent class
         super().__init__(name_folder="Enemy")
 
-        self.should_update_walk = 0
-
-    def update_animations(self, delta_time: float = 1 / 60):
-        if self.change_x < 0 and self.facing_direction == RIGHT_FACING:
+    def update_animation(self, delta_time: float = 1 / 60):
+        if self.change_x > 0 and self.facing_direction == RIGHT_FACING:
             self.facing_direction = LEFT_FACING
-        elif self.change_x > 0 and self.facing_direction == LEFT_FACING:
+        elif self.change_x < 0 and self.facing_direction == LEFT_FACING:
             self.facing_direction = RIGHT_FACING
         
-        if self.change_x == 0:
-            self.cur_texture += 1
-            if self.cur_texture > 7:
-                self.cur_texture = 0
-            self.texture = self.idle_textures[self.cur_texture][self.facing_direction]
+        # Idle animation
+        if self.change_x == 0 and self.change_y == 0:
+            self.next_frame += 1
+            if self.next_frame == self.frame_time:
+                self.cur_texture += 1
+                if self.cur_texture > 2:
+                    self.cur_texture = 0
+                self.texture = self.idle_textures[self.cur_texture][self.facing_direction]
+                self.next_frame = 0
+        else:
+            # Walking animation
+            self.next_frame += 1
+            if self.next_frame == self.frame_time:
+                self.cur_texture += 1
+                if self.cur_texture > 5:
+                    self.cur_texture = 0
+                self.texture = self.walk_textures[self.cur_texture][self.facing_direction]
+                self.next_frame = 0
 
-        # Walking animation
-        if self.should_update_walk == 3:
-            self.cur_texture += 1
-            if self.cur_texture > 7:
-                self.cur_texture = 0
-            self.texture = self.walk_textures[self.cur_texture][self.facing_direction]
-            self.should_update_walk = 0
-            return
+class QuitButton(arcade.gui.UIFlatButton):
+    def on_click(self, event: arcade.gui.UIOnClickEvent):
+        arcade.exit()
 
-        self.should_update_walk += 1
-    
 
-class myGame(arcade.Window):
+class StartButton(arcade.gui.UIFlatButton):
+    def on_click(self, event: arcade.gui.UIOnClickEvent):
+        arcade.close_window()
+        window = gameView()
+        window.setup()
+        arcade.run()
+
+class MainMenu(arcade.Window):
+    """The main menu of the game"""
+
+    def __init__(self):
+        super().__init__(
+            SCREEN_WIDTH,
+            SCREEN_HEIGHT,
+            "UIFlatButton Example",
+            center_window = True,
+            )
+
+        # --- Required for all code that uses UI element,
+        # a UIManager to handle the UI.
+        self.manager = arcade.gui.UIManager()
+        self.manager.enable()
+
+        # Set background color
+        arcade.set_background_color(arcade.color.DARK_BLUE_GRAY)
+
+        # Create a vertical BoxGroup to align buttons
+        self.v_box = arcade.gui.UIBoxLayout()
+
+        # Create the buttons
+        start_button = StartButton(text="Start Game", width=200)
+        self.v_box.add(start_button.with_space_around(bottom=20))
+
+        # Again, method 1. Use a child class to handle events.
+        quit_button = QuitButton(text="Quit", width=200)
+        self.v_box.add(quit_button)
+
+        # Create a widget to hold the v_box widget, that will center the buttons
+        self.manager.add(
+            arcade.gui.UIAnchorWidget(
+                anchor_x="center_x",
+                anchor_y="center_y",
+                child=self.v_box)
+        )
+
+    def on_draw(self):
+        self.clear()
+        self.manager.draw()
+
+class gameView(arcade.Window):
     """
     Main Class
     """
 
     def __init__(self):
-        # Call the parent class and set up the window
-        super().__init__(
-            SCREEN_WIDTH, 
-            SCREEN_HEIGHT, 
-            SCREEN_TITLE, 
-            center_window = True
-            )
         
+        super().__init__(
+            SCREEN_WIDTH,
+            SCREEN_HEIGHT,
+            "Game",
+            center_window = True,
+        )
+
         file_path = os.path.dirname(os.path.abspath(__file__))
         os.chdir(file_path)
 
@@ -174,6 +239,7 @@ class myGame(arcade.Window):
         self.down_pressed = False
         self.left_pressed = False
         self.right_pressed = False
+        self.last_direction = 0
 
         #Player health
         self.player_max_health = 100
@@ -181,7 +247,9 @@ class myGame(arcade.Window):
 
         #Player attack
         self.attack = None
-        self.can_attack = None
+        self.can_attack = True
+        self.attack_start = 0
+        self.attack_damage = 5
 
         #Dash ability
         self.dashing = None
@@ -241,15 +309,18 @@ class myGame(arcade.Window):
         # Calculate the right edge of the my_map in pixels
         self.end_of_map = self.tile_map.width * GRID_PIXEL_SIZE
 
-        self.player_sprite = PlayerCharacter("Player")
-        self.player_sprite.center_x = 64
-        self.player_sprite.center_y = 128
+        self.player_sprite = PlayerCharacter(LAYER_NAME_PLAYER)
+        self.player_sprite.center_x = SCREEN_WIDTH / 2
+        self.player_sprite.center_y = SCREEN_HEIGHT / 2
         self.scene.add_sprite(LAYER_NAME_PLAYER, self.player_sprite)
 
-        enemy = Enemy("Enemy")
+        enemy = Enemy(LAYER_NAME_ENEMIES)
         enemy.center_x = 120
         enemy.center_y = 120
         self.scene.add_sprite(LAYER_NAME_ENEMIES, enemy)
+
+        
+        
 
         #Creates the physics engine
         self.physics_engine = arcade.PhysicsEngineSimple(
@@ -278,35 +349,40 @@ class myGame(arcade.Window):
         self.cooldown_sprite.center_y = 30
         self.scene.add_sprite("Cooldown", self.cooldown_sprite)
 
+        if self.attack == True:
+            self.attack_sprite.draw()
+
 
     def update_player_speed(self):
         """Moves the player according to the direction they are facing"""
         if self.up_pressed and not self.down_pressed:
             self.player_sprite.change_y = PLAYER_MOVEMENT_SPEED
-            direction[0] = 1
+            direction[1] = 1
         elif self.down_pressed and not self.up_pressed:
             self.player_sprite.change_y = -PLAYER_MOVEMENT_SPEED
-            direction[0] = -1
+            direction[1] = -1
         if self.left_pressed and not self.right_pressed:
             self.player_sprite.change_x = -PLAYER_MOVEMENT_SPEED
-            direction[1] = -1
+            direction[0] = -1
+            self.last_direction = -1
         elif self.right_pressed and not self.left_pressed:
             self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED
-            direction[1] = 1
+            direction[0] = 1
+            self.last_direction = 1
 
         if self.right_pressed and self.left_pressed:
             self.player_sprite.change_x = 0
-            direction[1] = 0
+            direction[0] = 0
         if self.up_pressed and self.down_pressed:
             self.player_sprite.change_y = 0
-            direction[0] = 0
+            direction[1] = 0
             
         if not self.right_pressed and not self.left_pressed:
             self.player_sprite.change_x = 0
-            direction[1] = 0
+            direction[0] = 0
         if not self.up_pressed and not self.down_pressed:
             self.player_sprite.change_y = 0
-            direction[0] = 0
+            direction[1] = 0
 
     def on_key_press(self, key, modifiers):
         """When a key is pressed/held down."""
@@ -355,21 +431,52 @@ class myGame(arcade.Window):
 
     def on_update(self, delta_time):
         """Runs the game"""
+
+        self.physics_engine.update()
+
         
-        print(self.player_sprite.center_x, self.player_sprite.center_y)
+        self.scene.update_animation(
+            [
+                LAYER_NAME_PLAYER,
+                LAYER_NAME_ENEMIES
+            ]
+        )
+
+        self.scene.update([LAYER_NAME_ENEMIES])
 
         ###ATTACK###
+        attack_img = "Assets/Images/Stuff/swing.png"
+        self.attack_sprite = arcade.Sprite(attack_img, CHARACTER_SCALING)
+
+        if self.last_direction == 1:
+            self.attack_sprite = arcade.Sprite(attack_img, CHARACTER_SCALING)
+            self.attack_sprite.center_x = self.player_sprite.center_x + 10
+            self.attack_sprite.center_y = self.player_sprite.center_y
+        elif self.last_direction == -1:
+            self.attack_sprite = arcade.Sprite(attack_img, CHARACTER_SCALING, flipped_horizontally=True)
+            self.attack_sprite.center_x = self.player_sprite.center_x - 10
+            self.attack_sprite.center_y = self.player_sprite.center_y
+
+
 
         if self.attack == True:
-            pass
+            self.can_attack = False
+            if self.attack_start < 20:
+                self.attack_start += 1
+            else:
+                self.attack_start = 0
+                self.attack = False
+                self.can_attack = True
+            
+
 
 
         ###DASHING ABILITY###
 
         #Dashing ability
         if self.dashing == True:
-            self.player_sprite.change_y = PLAYER_DASH_SPEED * direction[0]
-            self.player_sprite.change_x = PLAYER_DASH_SPEED * direction[1]
+            self.player_sprite.change_y = PLAYER_DASH_SPEED * direction[1]
+            self.player_sprite.change_x = PLAYER_DASH_SPEED * direction[0]
             self.dash_start += 1
             self.dash_indicator_level = 0
             if self.dash_start == 10:
@@ -377,8 +484,8 @@ class myGame(arcade.Window):
                 self.dash_cooldown = -1
                 self.dash_start = 0
                 if self.dashing == False:
-                    self.player_sprite.change_y = PLAYER_MOVEMENT_SPEED * direction[0]
-                    self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED * direction[1]
+                    self.player_sprite.change_y = PLAYER_MOVEMENT_SPEED * direction[1]
+                    self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED * direction[0]
 
         #Dash cooldown
         if self.dash_cooldown < 300:
@@ -392,7 +499,7 @@ class myGame(arcade.Window):
             self.can_dash = True
 
 
-        ###ENEMY FOLLOWING PLAYER###
+        ###ENEMY###
             
         #Enemy following player
         for enemy in self.scene[LAYER_NAME_ENEMIES]:
@@ -415,11 +522,21 @@ class myGame(arcade.Window):
 
 
             ###COLLISION###
+            enemy_hit = arcade.check_for_collision(
+                self.attack_sprite, enemy
+            )
+            if enemy_hit == True:
+                self.enemy_health -= self.attack_damage
+                enemy.center_x -= math.cos(angle) * KNOCKBACK
+                enemy.center_y -= math.sin(angle) * KNOCKBACK
+            print(self.enemy_health)
+
 
             #Checks for collision between the player and enemy
             if self.invincible != True:
                 enemy_collision = arcade.check_for_collision(
-                    self.player_sprite, enemy)
+                    self.player_sprite, enemy
+            )
             else:
                 enemy_collision = False
 
@@ -450,8 +567,8 @@ class myGame(arcade.Window):
             #Sets how far the knockback is going to be
             if self.knockback == True:
                 if self.knockback_time < 5:
-                    self.player_sprite.center_x += math.cos(angle) * PLAYER_DASH_SPEED
-                    self.player_sprite.center_y += math.sin(angle) * PLAYER_DASH_SPEED
+                    self.player_sprite.center_x += math.cos(angle) * KNOCKBACK
+                    self.player_sprite.center_y += math.sin(angle) * KNOCKBACK
                     self.knockback_time += 1
                 if self.knockback_time == 5:
                     self.knockback = False
@@ -466,7 +583,7 @@ class myGame(arcade.Window):
                     self.invincible_time = 0
 
 
-        self.physics_engine.update()
+
 
 
 
@@ -475,8 +592,7 @@ def main():
     """
     Main function
     """
-    window = myGame()
-    window.setup()
+    MainMenu()
     arcade.run()
 
 
