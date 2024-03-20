@@ -6,9 +6,11 @@ Python Assessment game
 import arcade, random, math
 
 #Constants
-SCREEN_WIDTH = 1600
-SCREEN_HEIGHT = 900
+SCREEN_WIDTH = 1024
+SCREEN_HEIGHT = 1024
 SCREEN_TITLE = "Game"
+
+VIEWPORT_MARGIN = 40
 
 PLAYER_MOVEMENT_SPEED = 5
 PLAYER_DASH_SPEED = 15
@@ -122,6 +124,9 @@ class myGame(arcade.Window):
         #Scene
         self.scene = None
 
+        #Tile map
+        self.tile_map = None
+
         #Physics engine
         self.physics_engine = None
 
@@ -192,8 +197,21 @@ class myGame(arcade.Window):
     def setup(self):
         """Sets up / restarts the game."""
 
+        
+
+        #Set up map
+        map_name = "Assets/level1.tmx"
+        
+        layer_options = {
+            "Walls": {
+                "use_spatial_hash": True,
+            },
+        }
+
+        self.tile_map = arcade.load_tilemap(map_name, TILE_SCALING, layer_options)
+
         #Initializes the scene
-        self.scene = arcade.Scene()
+        self.scene = arcade.Scene.from_tilemap(self.tile_map)
 
         #Sets up the camera
         self.gui_camera = arcade.Camera(self.width, self.height)
@@ -327,7 +345,7 @@ class myGame(arcade.Window):
         ###ATTACK###
 
         if self.attack == True:
-            
+            pass
 
 
         ###DASHING ABILITY###

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.9" tiledversion="1.9.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="128" tileheight="128" infinite="0" nextlayerid="4" nextobjectid="1">
+ <tileset firstgid="1" source="../../myGame/Tileset.tsx"/>
+ <layer id="1" name="Ground" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJzt0aERAAAIA7Fe9x+aLUAQEf3im6TAS9E/fwAAAFsG3rEH+w==
+  </data>
+ </layer>
+ <layer id="3" name="Wall" width="32" height="32">
+  <data encoding="base64" compression="zlib">
+   eJztzTENAAAMw7DiKH+gY7E+jpTbTdLxq/h8Pp/P5/P5fD6fz//0lx/vDAyZ
+  </data>
+ </layer>
+</map>
