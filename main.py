@@ -349,8 +349,8 @@ class gameView(arcade.Window):
         self.cooldown_sprite.center_y = 30
         self.scene.add_sprite("Cooldown", self.cooldown_sprite)
 
-        if self.attack == True:
-            self.attack_sprite.draw()
+        if self.attack == False:
+            self.attack_sprite.remove_from_sprite_lists()
 
 
     def update_player_speed(self):
@@ -460,7 +460,9 @@ class gameView(arcade.Window):
 
 
         if self.attack == True:
+            self.scene.add_sprite(LAYER_NAME_ATTACK, self.attack_sprite)
             self.can_attack = False
+            
             if self.attack_start < 20:
                 self.attack_start += 1
             else:
