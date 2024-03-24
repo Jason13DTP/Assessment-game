@@ -29,8 +29,6 @@ PLAYER_START_Y = SCREEN_HEIGHT / 2
 
 RIGHT_FACING = 0
 LEFT_FACING = 1
-#DOWN_FACING = 2
-#UP_FACING = 3
 
 LAYER_NAME_PLAYER = "Player"
 LAYER_NAME_ENEMIES = "Enemy"
@@ -41,6 +39,7 @@ LAYER_NAME_ATTACK = "Attack"
 direction = [0, 0]
 
 
+
 #Functions
 
 def load_texture_pair(filename):
@@ -49,6 +48,7 @@ def load_texture_pair(filename):
         arcade.load_texture(filename),
         arcade.load_texture(filename, flipped_horizontally=True)
     ]
+
 
 #Class
 class Entity(arcade.Sprite):
@@ -62,21 +62,24 @@ class Entity(arcade.Sprite):
         self.next_frame = 0
         self.scale = CHARACTER_SCALING
 
+        #Main path for the images of the sprites
         main_path = f"Assets/Images/{name_folder}"
         
+        #Adds the frames of the idle animation to a list
         self.idle_textures = []
         for i in range(3):
             texture = load_texture_pair(f"{main_path}/idle_{i}.png")
             self.idle_textures.append(texture)
 
+        #Adds the frames of the walk animation to a list
         self.walk_textures = []
         for i in range(0, 6):
             texture = load_texture_pair(f"{main_path}/walk_{i}.png")
             self.walk_textures.append(texture)
         
+        #Sets the initial texture for the sprites
         init_texture = arcade.load_texture(f"{main_path}/idle_0.png")
         self.set_hit_box(init_texture.hit_box_points)
-
         self.texture = self.walk_textures[0][0]
 
 
@@ -268,12 +271,16 @@ class gameView(arcade.Window):
         #Player knockback
         self.knockback = None
         self.knockback_time = 0
+        self.enemy_knockback_time = 0
         self.invincible = None
         self.invincible_time = 0
 
         #Enemy health
         self.enemy_max_health = 20
         self.enemy_health = 20
+
+        #Enemy hit
+        self.enemy_hit = None
 
         #Enemy attack
         self.enemy_attack = 5
@@ -319,7 +326,8 @@ class gameView(arcade.Window):
         enemy.center_y = 120
         self.scene.add_sprite(LAYER_NAME_ENEMIES, enemy)
 
-        
+
+        self.scene.add_sprite_list(LAYER_NAME_ATTACK)
         
 
         #Creates the physics engine
@@ -350,7 +358,7 @@ class gameView(arcade.Window):
         self.scene.add_sprite("Cooldown", self.cooldown_sprite)
 
         if self.attack == False:
-            self.attack_sprite.remove_from_sprite_lists()
+            pass
 
 
     def update_player_speed(self):
@@ -460,15 +468,18 @@ class gameView(arcade.Window):
 
 
         if self.attack == True:
-            self.scene.add_sprite(LAYER_NAME_ATTACK, self.attack_sprite)
+            attack_sprite_list = self.scene.get_sprite_list(LAYER_NAME_ATTACK)
             self.can_attack = False
             
             if self.attack_start < 20:
+                if self.attack_start == 0:
+                    attack_sprite_list.append(self.attack_sprite)
                 self.attack_start += 1
             else:
                 self.attack_start = 0
                 self.attack = False
                 self.can_attack = True
+    
             
 
 
@@ -502,7 +513,7 @@ class gameView(arcade.Window):
 
 
         ###ENEMY###
-            
+
         #Enemy following player
         for enemy in self.scene[LAYER_NAME_ENEMIES]:
             enemy.center_x += enemy.change_x
@@ -524,14 +535,24 @@ class gameView(arcade.Window):
 
 
             ###COLLISION###
-            enemy_hit = arcade.check_for_collision(
+
+            enemy_hit_contact = arcade.check_for_collision(
                 self.attack_sprite, enemy
             )
-            if enemy_hit == True:
+
+            if enemy_hit_contact == True:
+                self.enemy_hit = True
+
+            if self.enemy_hit == True:
                 self.enemy_health -= self.attack_damage
-                enemy.center_x -= math.cos(angle) * KNOCKBACK
-                enemy.center_y -= math.sin(angle) * KNOCKBACK
-            print(self.enemy_health)
+                
+                if self.enemy_knockback_time < 3:
+                    self.enemy_knockback_time += 1
+                    enemy.center_x -= math.cos(angle) * KNOCKBACK
+                    enemy.center_y -= math.sin(angle) * KNOCKBACK
+                if self.enemy_knockback_time == 3:
+                    self.enemy_knockback_time = 0
+                    self.enemy_hit = False
 
 
             #Checks for collision between the player and enemy
