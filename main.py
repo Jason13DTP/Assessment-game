@@ -105,7 +105,8 @@ class PlayerCharacter(Entity):
                 self.cur_texture += 1
                 if self.cur_texture > 2:
                     self.cur_texture = 0
-                self.texture = self.idle_textures[self.cur_texture][self.facing_direction]
+                self.texture = self.idle_textures[self.cur_texture]\
+                    [self.facing_direction]
                 self.next_frame = 0
         else:
             # Walking animation
@@ -114,7 +115,8 @@ class PlayerCharacter(Entity):
                 self.cur_texture += 1
                 if self.cur_texture > 5:
                     self.cur_texture = 0
-                self.texture = self.walk_textures[self.cur_texture][self.facing_direction]
+                self.texture = self.walk_textures[self.cur_texture]\
+                    [self.facing_direction]
                 self.next_frame = 0
             
 
@@ -140,7 +142,8 @@ class Enemy(Entity):
                 self.cur_texture += 1
                 if self.cur_texture > 2:
                     self.cur_texture = 0
-                self.texture = self.idle_textures[self.cur_texture][self.facing_direction]
+                self.texture = self.idle_textures[self.cur_texture]\
+                    [self.facing_direction]
                 self.next_frame = 0
         else:
             # Walking animation
@@ -149,7 +152,8 @@ class Enemy(Entity):
                 self.cur_texture += 1
                 if self.cur_texture > 5:
                     self.cur_texture = 0
-                self.texture = self.walk_textures[self.cur_texture][self.facing_direction]
+                self.texture = self.walk_textures[self.cur_texture]\
+                    [self.facing_direction]
                 self.next_frame = 0
 
 class QuitButton(arcade.gui.UIFlatButton):
@@ -160,7 +164,7 @@ class QuitButton(arcade.gui.UIFlatButton):
 class StartButton(arcade.gui.UIFlatButton):
     def on_click(self, event: arcade.gui.UIOnClickEvent):
         arcade.close_window()
-        window = gameView()
+        window = GameView()
         window.setup()
         arcade.run()
 
@@ -206,7 +210,7 @@ class MainMenu(arcade.Window):
         self.clear()
         self.manager.draw()
 
-class gameView(arcade.Window):
+class GameView(arcade.Window):
     """
     Main Class
     """
@@ -306,7 +310,11 @@ class gameView(arcade.Window):
         }
 
         #Load in tile map
-        self.tile_map = arcade.load_tilemap(map_name, TILE_SCALING, layer_options)
+        self.tile_map = arcade.load_tilemap(
+            map_name,
+            TILE_SCALING, 
+            layer_options,
+            )
 
         #Initializes the scene
         self.scene = arcade.Scene.from_tilemap(self.tile_map)
@@ -351,7 +359,9 @@ class gameView(arcade.Window):
         arcade.draw_text(health_text, 10, 10, arcade.color.WHITE, 18)
 
         #Cooldown indicator
-        indicator_img = f"Assets/Dash indicator/Dash_level_{self.dash_indicator_level + 1}.png"
+        indicator_img = f"""
+        Assets/Dash indicator/Dash_level_{self.dash_indicator_level + 1}.png
+        """
         self.cooldown_sprite = arcade.Sprite(indicator_img, 2)
         self.cooldown_sprite.center_x = SCREEN_WIDTH
         self.cooldown_sprite.center_y = 30
@@ -461,7 +471,11 @@ class gameView(arcade.Window):
             self.attack_sprite.center_x = self.player_sprite.center_x + 10
             self.attack_sprite.center_y = self.player_sprite.center_y
         elif self.last_direction == -1:
-            self.attack_sprite = arcade.Sprite(attack_img, CHARACTER_SCALING, flipped_horizontally=True)
+            self.attack_sprite = arcade.Sprite(
+                attack_img, 
+                CHARACTER_SCALING, 
+                flipped_horizontally=True,
+                )
             self.attack_sprite.center_x = self.player_sprite.center_x - 10
             self.attack_sprite.center_y = self.player_sprite.center_y
 
@@ -497,8 +511,10 @@ class gameView(arcade.Window):
                 self.dash_cooldown = -1
                 self.dash_start = 0
                 if self.dashing == False:
-                    self.player_sprite.change_y = PLAYER_MOVEMENT_SPEED * direction[1]
-                    self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED * direction[0]
+                    self.player_sprite.change_y = PLAYER_MOVEMENT_SPEED * \
+                        direction[1]
+                    self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED * \
+                        direction[0]
 
         #Dash cooldown
         if self.dash_cooldown < 300:
@@ -530,12 +546,13 @@ class gameView(arcade.Window):
             #Calculates the x and y distance between the enemy and the player
             dist_x = int(dest_x - start_x)
             dist_y = int(dest_y - start_y)
-            #Using trig to find the angle difference between the player and enemy
+            #Using trig to find the angle difference between player and enemy
             angle = math.atan2(dist_y, dist_x)
 
 
             ###COLLISION###
-
+            for attack in self.scene[LAYER_NAME_ATTACK]:
+                pass
             enemy_hit_contact = arcade.check_for_collision(
                 self.attack_sprite, enemy
             )
