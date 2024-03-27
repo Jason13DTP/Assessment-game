@@ -61,6 +61,7 @@ class Entity(arcade.Sprite):
         self.frame_time = 10
         self.next_frame = 0
         self.scale = CHARACTER_SCALING
+        self.game = gameView()
 
         #Main path for the images of the sprites
         main_path = f"Assets/Images/{name_folder}"
@@ -76,7 +77,7 @@ class Entity(arcade.Sprite):
         for i in range(0, 6):
             texture = load_texture_pair(f"{main_path}/walk_{i}.png")
             self.walk_textures.append(texture)
-        
+
         #Sets the initial texture for the sprites
         init_texture = arcade.load_texture(f"{main_path}/idle_0.png")
         self.set_hit_box(init_texture.hit_box_points)
@@ -89,7 +90,14 @@ class PlayerCharacter(Entity):
         #Sets up parent class
         super().__init__(name_folder="Player")
 
-        
+        #Main path for the images of the sprites
+        main_path = f"Assets/Images/{name_folder}"
+
+        #Adds the frames of the attack animation to a list
+        self.attack_textures = []
+        for i in range (0, 6):
+            texture = load_texture_pair(f"{main_path}/attack_{i}.png")
+            self.attack_textures.append(texture)
         
     def update_animation(self, delta_time: float = 1 / 60):
         # Figure out if we need to flip face left or right
@@ -105,8 +113,7 @@ class PlayerCharacter(Entity):
                 self.cur_texture += 1
                 if self.cur_texture > 2:
                     self.cur_texture = 0
-                self.texture = self.idle_textures[self.cur_texture]\
-                    [self.facing_direction]
+                self.texture = self.idle_textures[self.cur_texture][self.facing_direction]
                 self.next_frame = 0
         else:
             # Walking animation
@@ -115,10 +122,18 @@ class PlayerCharacter(Entity):
                 self.cur_texture += 1
                 if self.cur_texture > 5:
                     self.cur_texture = 0
-                self.texture = self.walk_textures[self.cur_texture]\
-                    [self.facing_direction]
+                self.texture = self.walk_textures[self.cur_texture][self.facing_direction]
                 self.next_frame = 0
-            
+        
+        if self.game.attack == True:
+            # Attack animation
+            self.next_frame += 1
+            if self.next_frame == self.frame_time:
+                self.cur_texture += 1
+                if self.cur_texture > 5:
+                    self.cur_texture = 0
+                self.texture = self.attack_textures[self.cur_texture][self.facing_direction]
+                self.next_frame = 0
 
 
 class Enemy(Entity):
@@ -142,8 +157,7 @@ class Enemy(Entity):
                 self.cur_texture += 1
                 if self.cur_texture > 2:
                     self.cur_texture = 0
-                self.texture = self.idle_textures[self.cur_texture]\
-                    [self.facing_direction]
+                self.texture = self.idle_textures[self.cur_texture][self.facing_direction]
                 self.next_frame = 0
         else:
             # Walking animation
@@ -152,8 +166,7 @@ class Enemy(Entity):
                 self.cur_texture += 1
                 if self.cur_texture > 5:
                     self.cur_texture = 0
-                self.texture = self.walk_textures[self.cur_texture]\
-                    [self.facing_direction]
+                self.texture = self.walk_textures[self.cur_texture][self.facing_direction]
                 self.next_frame = 0
 
 class QuitButton(arcade.gui.UIFlatButton):
@@ -164,7 +177,7 @@ class QuitButton(arcade.gui.UIFlatButton):
 class StartButton(arcade.gui.UIFlatButton):
     def on_click(self, event: arcade.gui.UIOnClickEvent):
         arcade.close_window()
-        window = GameView()
+        window = gameView()
         window.setup()
         arcade.run()
 
@@ -210,7 +223,7 @@ class MainMenu(arcade.Window):
         self.clear()
         self.manager.draw()
 
-class GameView(arcade.Window):
+class gameView(arcade.Window):
     """
     Main Class
     """
@@ -257,6 +270,7 @@ class GameView(arcade.Window):
         self.can_attack = True
         self.attack_start = 0
         self.attack_damage = 5
+        self.attack_sprite_list = None
 
         #Dash ability
         self.dashing = None
@@ -310,11 +324,7 @@ class GameView(arcade.Window):
         }
 
         #Load in tile map
-        self.tile_map = arcade.load_tilemap(
-            map_name,
-            TILE_SCALING, 
-            layer_options,
-            )
+        self.tile_map = arcade.load_tilemap(map_name, TILE_SCALING, layer_options)
 
         #Initializes the scene
         self.scene = arcade.Scene.from_tilemap(self.tile_map)
@@ -329,11 +339,12 @@ class GameView(arcade.Window):
         self.player_sprite.center_y = SCREEN_HEIGHT / 2
         self.scene.add_sprite(LAYER_NAME_PLAYER, self.player_sprite)
 
+
+        self.scene.add_sprite_list(LAYER_NAME_ENEMIES)
         enemy = Enemy(LAYER_NAME_ENEMIES)
         enemy.center_x = 120
         enemy.center_y = 120
         self.scene.add_sprite(LAYER_NAME_ENEMIES, enemy)
-
 
         self.scene.add_sprite_list(LAYER_NAME_ATTACK)
         
@@ -359,16 +370,11 @@ class GameView(arcade.Window):
         arcade.draw_text(health_text, 10, 10, arcade.color.WHITE, 18)
 
         #Cooldown indicator
-        indicator_img = f"""
-        Assets/Dash indicator/Dash_level_{self.dash_indicator_level + 1}.png
-        """
+        indicator_img = f"Assets/Dash indicator/Dash_level_{self.dash_indicator_level + 1}.png"
         self.cooldown_sprite = arcade.Sprite(indicator_img, 2)
         self.cooldown_sprite.center_x = SCREEN_WIDTH
         self.cooldown_sprite.center_y = 30
         self.scene.add_sprite("Cooldown", self.cooldown_sprite)
-
-        if self.attack == False:
-            pass
 
 
     def update_player_speed(self):
@@ -466,33 +472,35 @@ class GameView(arcade.Window):
         attack_img = "Assets/Images/Stuff/swing.png"
         self.attack_sprite = arcade.Sprite(attack_img, CHARACTER_SCALING)
 
-        if self.last_direction == 1:
-            self.attack_sprite = arcade.Sprite(attack_img, CHARACTER_SCALING)
-            self.attack_sprite.center_x = self.player_sprite.center_x + 10
-            self.attack_sprite.center_y = self.player_sprite.center_y
-        elif self.last_direction == -1:
-            self.attack_sprite = arcade.Sprite(
-                attack_img, 
-                CHARACTER_SCALING, 
-                flipped_horizontally=True,
-                )
-            self.attack_sprite.center_x = self.player_sprite.center_x - 10
-            self.attack_sprite.center_y = self.player_sprite.center_y
-
-
-
         if self.attack == True:
-            attack_sprite_list = self.scene.get_sprite_list(LAYER_NAME_ATTACK)
+            if self.last_direction == 1:
+                self.attack_sprite = arcade.Sprite(
+                    attack_img, 
+                    CHARACTER_SCALING,
+                    )
+            if self.last_direction == -1:
+                self.attack_sprite = arcade.Sprite(
+                    attack_img,
+                     CHARACTER_SCALING,
+                      flipped_horizontally=True,
+                      )
+
+            self.attack_sprite.center_x = self.player_sprite.center_x + 10 * \
+                self.last_direction
+            self.attack_sprite.center_y = self.player_sprite.center_y
+
+            self.attack_sprite_list = self.scene.get_sprite_list(LAYER_NAME_ATTACK)
             self.can_attack = False
             
             if self.attack_start < 20:
                 if self.attack_start == 0:
-                    attack_sprite_list.append(self.attack_sprite)
+                    self.attack_sprite_list.append(self.attack_sprite)
                 self.attack_start += 1
             else:
                 self.attack_start = 0
                 self.attack = False
                 self.can_attack = True
+                self.attack_sprite_list.pop(0)
     
             
 
@@ -506,15 +514,13 @@ class GameView(arcade.Window):
             self.player_sprite.change_x = PLAYER_DASH_SPEED * direction[0]
             self.dash_start += 1
             self.dash_indicator_level = 0
-            if self.dash_start == 10:
+            if self.dash_start == 20:
                 self.dashing = False
                 self.dash_cooldown = -1
                 self.dash_start = 0
                 if self.dashing == False:
-                    self.player_sprite.change_y = PLAYER_MOVEMENT_SPEED * \
-                        direction[1]
-                    self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED * \
-                        direction[0]
+                    self.player_sprite.change_y = PLAYER_MOVEMENT_SPEED * direction[1]
+                    self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED * direction[0]
 
         #Dash cooldown
         if self.dash_cooldown < 300:
@@ -546,13 +552,12 @@ class GameView(arcade.Window):
             #Calculates the x and y distance between the enemy and the player
             dist_x = int(dest_x - start_x)
             dist_y = int(dest_y - start_y)
-            #Using trig to find the angle difference between player and enemy
+            #Using trig to find the angle difference between the player and enemy
             angle = math.atan2(dist_y, dist_x)
 
 
             ###COLLISION###
-            for attack in self.scene[LAYER_NAME_ATTACK]:
-                pass
+
             enemy_hit_contact = arcade.check_for_collision(
                 self.attack_sprite, enemy
             )

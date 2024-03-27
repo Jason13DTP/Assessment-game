@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="80" height="60" tilewidth="128" tileheight="128" infinite="0" nextlayerid="5" nextobjectid="5">
+<map version="1.9" tiledversion="1.9.2" orientation="orthogonal" renderorder="right-down" width="80" height="60" tilewidth="128" tileheight="128" infinite="0" nextlayerid="5" nextobjectid="5">
  <tileset firstgid="1" source="Tileset.tsx"/>
+ <tileset firstgid="91" source="../../myGame/Tileset.tsx"/>
  <layer id="1" name="Ground" width="80" height="60">
   <data encoding="base64" compression="zlib">
-   eJztzrENAAAIA6Cm/x/tD06aMLDTJGUlBw4AAAAAAAAAAAAAAAAAAAAAAADfDJTaJX8=
+   eJztw0ENAAAMA6ETWv865mIvSFg1VVVVVVVVVVVVVVVVVVVVVVVVfXoU9L1b
   </data>
  </layer>
  <layer id="3" name="Wall" width="80" height="60">
