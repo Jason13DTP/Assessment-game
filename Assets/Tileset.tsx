@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.10" tiledversion="1.10.2" name="Tileset" tilewidth="128" tileheight="128" tilecount="90" columns="0">
+<tileset version="1.10" tiledversion="1.10.2" name="Tileset" tilewidth="256" tileheight="228" tilecount="91" columns="0">
  <grid orientation="orthogonal" width="1" height="1"/>
  <tile id="0">
   <image width="128" height="128" source="kenney_platformer-pack-redux/PNG/Ground/Grass/grass.png"/>
@@ -270,5 +270,8 @@
  </tile>
  <tile id="89">
   <image width="128" height="128" source="kenney_platformer-pack-redux/PNG/Tiles/window.png"/>
+ </tile>
+ <tile id="91">
+  <image width="256" height="228" source="orb.png"/>
  </tile>
 </tileset>

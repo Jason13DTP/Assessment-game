@@ -16,7 +16,7 @@ PLAYER_MOVEMENT_SPEED = 2
 PLAYER_DASH_SPEED = 6
 KNOCKBACK = 12
 
-ENEMY_MOVEMENT_SPEED = 0.5
+ENEMY_MOVEMENT_SPEED = 1.1
 
 #Constants for scaling
 TILE_SCALING = 0.1
@@ -54,14 +54,14 @@ def load_texture_pair(filename):
 class Entity(arcade.Sprite):
     
     def __init__(self, name_folder):
-        super().__init__()
+        super().__init__(hit_box_algorithm=None)
 
+        
         self.facing_direction = RIGHT_FACING
         self.cur_texture = 0
         self.frame_time = 10
         self.next_frame = 0
         self.scale = CHARACTER_SCALING
-        self.game = gameView()
 
         #Main path for the images of the sprites
         main_path = f"Assets/Images/{name_folder}"
@@ -77,6 +77,13 @@ class Entity(arcade.Sprite):
         for i in range(0, 6):
             texture = load_texture_pair(f"{main_path}/walk_{i}.png")
             self.walk_textures.append(texture)
+        
+        if name_folder == "Player":
+            #Adds the frames of the attack animation to a list
+            self.attack_textures = []
+            for i in range(0, 6):
+                texture = load_texture_pair(f"{main_path}/attack_{i}.png")
+                self.attack_textures.append(texture)
 
         #Sets the initial texture for the sprites
         init_texture = arcade.load_texture(f"{main_path}/idle_0.png")
@@ -89,15 +96,6 @@ class PlayerCharacter(Entity):
     def __init__(self, name_folder):
         #Sets up parent class
         super().__init__(name_folder="Player")
-
-        #Main path for the images of the sprites
-        main_path = f"Assets/Images/{name_folder}"
-
-        #Adds the frames of the attack animation to a list
-        self.attack_textures = []
-        for i in range (0, 6):
-            texture = load_texture_pair(f"{main_path}/attack_{i}.png")
-            self.attack_textures.append(texture)
         
     def update_animation(self, delta_time: float = 1 / 60):
         # Figure out if we need to flip face left or right
@@ -105,6 +103,25 @@ class PlayerCharacter(Entity):
             self.facing_direction = LEFT_FACING
         elif self.change_x < 0 and self.facing_direction == LEFT_FACING:
             self.facing_direction = RIGHT_FACING
+
+
+        # Attack animation
+        """
+        AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+        AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+        AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+        AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+        AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+        """
+        if self.change_x == 100:
+            print("yo")
+            self.next_frame += 1
+            if self.next_frame == self.frame_time:
+                self.cur_texture += 1
+                if self.cur_texture > 5:
+                    self.cur_texture = 0
+                self.texture = self.attack_textures[self.cur_texture][self.facing_direction]
+                self.next_frame = 0
 
         # Idle animation
         if self.change_x == 0 and self.change_y == 0:
@@ -124,16 +141,7 @@ class PlayerCharacter(Entity):
                     self.cur_texture = 0
                 self.texture = self.walk_textures[self.cur_texture][self.facing_direction]
                 self.next_frame = 0
-        
-        if self.game.attack == True:
-            # Attack animation
-            self.next_frame += 1
-            if self.next_frame == self.frame_time:
-                self.cur_texture += 1
-                if self.cur_texture > 5:
-                    self.cur_texture = 0
-                self.texture = self.attack_textures[self.cur_texture][self.facing_direction]
-                self.next_frame = 0
+
 
 
 class Enemy(Entity):
@@ -169,73 +177,125 @@ class Enemy(Entity):
                 self.texture = self.walk_textures[self.cur_texture][self.facing_direction]
                 self.next_frame = 0
 
-class QuitButton(arcade.gui.UIFlatButton):
-    def on_click(self, event: arcade.gui.UIOnClickEvent):
-        arcade.exit()
 
 
-class StartButton(arcade.gui.UIFlatButton):
-    def on_click(self, event: arcade.gui.UIOnClickEvent):
-        arcade.close_window()
-        window = gameView()
-        window.setup()
-        arcade.run()
+class InstructionView(arcade.View):
+    """ View to show instructions """
 
-class MainMenu(arcade.Window):
-    """The main menu of the game"""
+    def on_show_view(self):
+        """ This is run once when we switch to this view """
+        arcade.set_background_color(arcade.csscolor.CORNFLOWER_BLUE)
 
-    def __init__(self):
-        super().__init__(
-            SCREEN_WIDTH,
-            SCREEN_HEIGHT,
-            "UIFlatButton Example",
-            center_window = True,
-            )
-
-        # --- Required for all code that uses UI element,
-        # a UIManager to handle the UI.
-        self.manager = arcade.gui.UIManager()
-        self.manager.enable()
-
-        # Set background color
-        arcade.set_background_color(arcade.color.DARK_BLUE_GRAY)
-
-        # Create a vertical BoxGroup to align buttons
-        self.v_box = arcade.gui.UIBoxLayout()
-
-        # Create the buttons
-        start_button = StartButton(text="Start Game", width=200)
-        self.v_box.add(start_button.with_space_around(bottom=20))
-
-        # Again, method 1. Use a child class to handle events.
-        quit_button = QuitButton(text="Quit", width=200)
-        self.v_box.add(quit_button)
-
-        # Create a widget to hold the v_box widget, that will center the buttons
-        self.manager.add(
-            arcade.gui.UIAnchorWidget(
-                anchor_x="center_x",
-                anchor_y="center_y",
-                child=self.v_box)
-        )
+        # Reset the viewport, necessary if we have a scrolling game and we need
+        # to reset the viewport back to the start so we can see what we draw.
+        arcade.set_viewport(0, self.window.width, 0, self.window.height)
 
     def on_draw(self):
+        """ Draw this view """
         self.clear()
-        self.manager.draw()
+        arcade.draw_text(
+            "WASD to move, J to attack, K to dash",
+            self.window.width / 2,
+            self.window.height / 2 + 40,
+            arcade.color.WHITE,
+            font_size=40,
+            anchor_x="center"
+        )
+        arcade.draw_text(
+            "Enemy cannot be damaged until all orbs are collected",
+            self.window.width / 2,
+            self.window.height / 2-20,
+            arcade.color.WHITE,
+            font_size=30,
+            anchor_x="center"
+        )
+        arcade.draw_text(
+            "Click to advance",
+            self.window.width / 2,
+            self.window.height / 2-75,
+            arcade.color.WHITE,
+            font_size=20,
+            anchor_x="center"
 
-class gameView(arcade.Window):
+        )
+
+    def on_mouse_press(self, _x, _y, _button, _modifiers):
+        """ If the user presses the mouse button, start the game. """
+        game_view = gameView()
+        game_view.setup()
+        self.window.show_view(game_view)
+
+
+
+class gameOverView(arcade.View):
+    """Game over screen"""
+    def __init__(self):
+        super().__init__()
+
+    def on_draw(self):
+        """ Draw this view """
+        self.clear()
+        arcade.draw_text(
+            "Game Over",
+            self.window.width / 2,
+            self.window.height / 2,
+            arcade.color.WHITE,
+            font_size=40,
+            anchor_x="center"
+        )
+        arcade.draw_text(
+            "Click to retry",
+            self.window.width / 2,
+            self.window.height / 2-75,
+            arcade.color.WHITE,
+            font_size=20,
+            anchor_x="center"
+        )
+    
+    def on_mouse_press(self, _x, _y, _button, _modifiers):
+        """ If the user presses the mouse button, re-start the game. """
+        game_view = gameView()
+        game_view.setup()
+        self.window.show_view(game_view)
+
+
+class gameWinView(arcade.View):
+    """Game win screen"""
+    def __init__(self):
+        super().__init__()
+
+    def on_draw(self):
+        """ Draw this view """
+        self.clear()
+        arcade.draw_text(
+            "You win!",
+            self.window.width / 2,
+            self.window.height / 2,
+            arcade.color.WHITE,
+            font_size=40,
+            anchor_x="center"
+        )
+        arcade.draw_text(
+            "Click to leave",
+            self.window.width / 2,
+            self.window.height / 2-75,
+            arcade.color.WHITE,
+            font_size=20,
+            anchor_x="center"
+        )
+    
+    def on_mouse_press(self, _x, _y, _button, _modifiers):
+        """ If the user presses the mouse button, re-start the game. """
+        self.window.close()
+
+class gameView(arcade.View):
     """
     Main Class
     """
 
     def __init__(self):
         
-        super().__init__(
-            SCREEN_WIDTH,
-            SCREEN_HEIGHT,
-            "Game",
-            center_window = True,
-        )
+        super().__init__()
 
         file_path = os.path.dirname(os.path.abspath(__file__))
         os.chdir(file_path)
@@ -252,7 +312,7 @@ class gameView(arcade.Window):
 
         self.end_of_map = 0
 
-        self.score = 0
+        self.coins_left = 20
 
         #Key pressed
         self.up_pressed = False
@@ -262,11 +322,11 @@ class gameView(arcade.Window):
         self.last_direction = 0
 
         #Player health
-        self.player_max_health = 100
-        self.player_health = 100
+        self.player_max_health = 20
+        self.player_health = 20
 
         #Player attack
-        self.attack = None
+        self.attack = False
         self.can_attack = True
         self.attack_start = 0
         self.attack_damage = 5
@@ -294,8 +354,8 @@ class gameView(arcade.Window):
         self.invincible_time = 0
 
         #Enemy health
-        self.enemy_max_health = 20
-        self.enemy_health = 20
+        self.enemy_max_health = 100
+        self.enemy_health = 100
 
         #Enemy hit
         self.enemy_hit = None
@@ -320,7 +380,10 @@ class gameView(arcade.Window):
             },
             "Ground": {
                 "use_spatial_hash": False,
-            }
+            },
+            "Coins": {
+                "use_spatial_hash": True,
+            },
         }
 
         #Load in tile map
@@ -338,13 +401,12 @@ class gameView(arcade.Window):
         self.player_sprite.center_x = SCREEN_WIDTH / 2
         self.player_sprite.center_y = SCREEN_HEIGHT / 2
         self.scene.add_sprite(LAYER_NAME_PLAYER, self.player_sprite)
-
-
-        self.scene.add_sprite_list(LAYER_NAME_ENEMIES)
+    
         enemy = Enemy(LAYER_NAME_ENEMIES)
         enemy.center_x = 120
         enemy.center_y = 120
         self.scene.add_sprite(LAYER_NAME_ENEMIES, enemy)
+
 
         self.scene.add_sprite_list(LAYER_NAME_ATTACK)
         
@@ -366,15 +428,26 @@ class gameView(arcade.Window):
         self.scene.draw()
 
         #Player health display
-        health_text = f"Health: {self.player_health}/{self.player_max_health}"
-        arcade.draw_text(health_text, 10, 10, arcade.color.WHITE, 18)
+        player_health_text = \
+        f"Player Health: {self.player_health}/{self.player_max_health}"
+        enemy_health_text = \
+        f"Enemy Health: {self.enemy_health}/{self.enemy_max_health}"
+        coins_left_text = \
+        f"Orbs left: {self.coins_left}"
+        arcade.draw_text(player_health_text, 10, 10, arcade.color.WHITE, 18)
+        arcade.draw_text(enemy_health_text, 10, 40, arcade.color.WHITE, 18)
+        arcade.draw_text(coins_left_text, 10, 70, arcade.color.WHITE, 18)
 
         #Cooldown indicator
-        indicator_img = f"Assets/Dash indicator/Dash_level_{self.dash_indicator_level + 1}.png"
+        indicator_img = \
+        f"Assets/Dash indicator/Dash_level_{self.dash_indicator_level + 1}.png"
         self.cooldown_sprite = arcade.Sprite(indicator_img, 2)
         self.cooldown_sprite.center_x = SCREEN_WIDTH
         self.cooldown_sprite.center_y = 30
         self.scene.add_sprite("Cooldown", self.cooldown_sprite)
+
+        if self.attack == False:
+            pass
 
 
     def update_player_speed(self):
@@ -411,14 +484,14 @@ class gameView(arcade.Window):
     def on_key_press(self, key, modifiers):
         """When a key is pressed/held down."""
 
-        if key == arcade.key.SPACE:
+        if key == arcade.key.K:
             if self.can_dash == True:
                 self.dashing = True
         
         if key == arcade.key.G:
             self.time_stop = not self.time_stop
 
-        if key == arcade.key.F:
+        if key == arcade.key.J:
             if self.can_attack == True:
                 self.attack = True
             
@@ -468,31 +541,47 @@ class gameView(arcade.Window):
 
         self.scene.update([LAYER_NAME_ENEMIES])
 
+        coin_hit_list = arcade.check_for_collision_with_list(
+            self.player_sprite, self.scene["Coins"]
+        )
+
+        # Loop through each coin we hit (if any) and remove it
+        for coin in coin_hit_list:
+            # Remove the coin
+            coin.remove_from_sprite_lists()
+            self.coins_left -= 1
+
         ###ATTACK###
         attack_img = "Assets/Images/Stuff/swing.png"
         self.attack_sprite = arcade.Sprite(attack_img, CHARACTER_SCALING)
 
         if self.attack == True:
+
             if self.last_direction == 1:
                 self.attack_sprite = arcade.Sprite(
-                    attack_img, 
-                    CHARACTER_SCALING,
-                    )
-            if self.last_direction == -1:
-                self.attack_sprite = arcade.Sprite(
                     attack_img,
-                     CHARACTER_SCALING,
-                      flipped_horizontally=True,
-                      )
+                    CHARACTER_SCALING
+                    )
+                
+                self.attack_sprite.center_x = self.player_sprite.center_x + 10
+                self.attack_sprite.center_y = self.player_sprite.center_y
 
-            self.attack_sprite.center_x = self.player_sprite.center_x + 10 * \
-                self.last_direction
-            self.attack_sprite.center_y = self.player_sprite.center_y
+            elif self.last_direction == -1:
+                self.attack_sprite = arcade.Sprite(
+                    attack_img, 
+                    CHARACTER_SCALING, 
+                    flipped_horizontally=True
+                    )
+                
+                self.attack_sprite.center_x = self.player_sprite.center_x - 10
+                self.attack_sprite.center_y = self.player_sprite.center_y
 
-            self.attack_sprite_list = self.scene.get_sprite_list(LAYER_NAME_ATTACK)
+            self.attack_sprite_list = self.scene.get_sprite_list(
+                LAYER_NAME_ATTACK
+                )
             self.can_attack = False
             
-            if self.attack_start < 20:
+            if self.attack_start < 10:
                 if self.attack_start == 0:
                     self.attack_sprite_list.append(self.attack_sprite)
                 self.attack_start += 1
@@ -514,22 +603,24 @@ class gameView(arcade.Window):
             self.player_sprite.change_x = PLAYER_DASH_SPEED * direction[0]
             self.dash_start += 1
             self.dash_indicator_level = 0
-            if self.dash_start == 20:
+            if self.dash_start == 10:
                 self.dashing = False
                 self.dash_cooldown = -1
                 self.dash_start = 0
                 if self.dashing == False:
-                    self.player_sprite.change_y = PLAYER_MOVEMENT_SPEED * direction[1]
-                    self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED * direction[0]
+                    self.player_sprite.change_y = \
+                        PLAYER_MOVEMENT_SPEED * direction[1]
+                    self.player_sprite.change_x = \
+                        PLAYER_MOVEMENT_SPEED * direction[0]
 
         #Dash cooldown
-        if self.dash_cooldown < 300:
+        if self.dash_cooldown < 180:
             self.dash_cooldown += 1
             self.can_dash = False
             for i in range (0, 5):
-                if self.dash_cooldown == i * 60:
+                if self.dash_cooldown == i * 30:
                     self.dash_indicator_level = i
-        if self.dash_cooldown == 300:
+        if self.dash_cooldown == 180:
             self.dash_indicator_level = 5
             self.can_dash = True
 
@@ -552,29 +643,29 @@ class gameView(arcade.Window):
             #Calculates the x and y distance between the enemy and the player
             dist_x = int(dest_x - start_x)
             dist_y = int(dest_y - start_y)
-            #Using trig to find the angle difference between the player and enemy
+            #Using trig to find the angle difference between player and enemy
             angle = math.atan2(dist_y, dist_x)
 
 
             ###COLLISION###
 
-            enemy_hit_contact = arcade.check_for_collision(
-                self.attack_sprite, enemy
-            )
+            if self.coins_left == 0:
+                enemy_hit_contact = arcade.check_for_collision(
+                    self.attack_sprite, enemy
+                )
 
-            if enemy_hit_contact == True:
-                self.enemy_hit = True
+                if enemy_hit_contact == True:
+                    self.enemy_hit = True
+                    self.enemy_health -= self.attack_damage
 
-            if self.enemy_hit == True:
-                self.enemy_health -= self.attack_damage
-                
-                if self.enemy_knockback_time < 3:
-                    self.enemy_knockback_time += 1
-                    enemy.center_x -= math.cos(angle) * KNOCKBACK
-                    enemy.center_y -= math.sin(angle) * KNOCKBACK
-                if self.enemy_knockback_time == 3:
-                    self.enemy_knockback_time = 0
-                    self.enemy_hit = False
+                if self.enemy_hit == True:
+                    if self.enemy_knockback_time < 3:
+                        self.enemy_knockback_time += 1
+                        enemy.center_x -= math.cos(angle) * KNOCKBACK
+                        enemy.center_y -= math.sin(angle) * KNOCKBACK
+                    if self.enemy_knockback_time == 3:
+                        self.enemy_knockback_time = 0
+                        self.enemy_hit = False
 
 
             #Checks for collision between the player and enemy
@@ -626,8 +717,14 @@ class gameView(arcade.Window):
                 if self.invincible_time == 60:
                     self.invincible = False
                     self.invincible_time = 0
+                    
 
-
+            if self.player_health <= 0:
+                view = gameOverView()
+                self.window.show_view(view)
+            if self.enemy_health <= 0:
+                view = gameWinView()
+                self.window.show_view(view)
 
 
 
@@ -637,7 +734,9 @@ def main():
     """
     Main function
     """
-    MainMenu()
+    window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, "Assessment game")
+    start_view = InstructionView()
+    window.show_view(start_view)
     arcade.run()
 
 
