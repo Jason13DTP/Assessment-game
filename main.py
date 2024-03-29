@@ -734,7 +734,7 @@ def main():
     """
     Main function
     """
-    window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, "Assessment game")
+    window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, "Scuffed game")
     start_view = InstructionView()
     window.show_view(start_view)
     arcade.run()
