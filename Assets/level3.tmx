@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.9" tiledversion="1.9.2" orientation="orthogonal" renderorder="right-down" width="80" height="60" tilewidth="128" tileheight="128" infinite="0" nextlayerid="5" nextobjectid="114">
+ <tileset firstgid="1" source="Tileset.tsx"/>
+ <layer id="1" name="Ground" width="80" height="60">
+  <data encoding="base64" compression="zlib">
+   eJztw8EJAAAMA6Ej+w/dLfpScNVUVVVVVVVVVVVVVVVVVVVVVVX16QEocSWB
+  </data>
+ </layer>
+ <layer id="3" name="Wall" width="80" height="60">
+  <data encoding="base64" compression="zlib">
+   eJzt3DENAEAMw8DiKH+gP/5er3dSCBhAdmbW0rjRr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a+5/hXZ3wPspRwJ
+  </data>
+ </layer>
+ <objectgroup id="4" name="Coins">
+  <object id="94" gid="92" x="4576" y="3250" width="256" height="228"/>
+  <object id="95" gid="92" x="7456" y="3442" width="256" height="228"/>
+  <object id="96" gid="92" x="6400" y="1666" width="256" height="228"/>
+  <object id="97" gid="92" x="3344" y="1602" width="256" height="228"/>
+  <object id="98" gid="92" x="1248" y="1666" width="256" height="228"/>
+  <object id="99" gid="92" x="1600" y="3874" width="256" height="228"/>
+  <object id="100" gid="92" x="1584" y="5730" width="256" height="228"/>
+  <object id="101" gid="92" x="4352" y="6114" width="256" height="228"/>
+  <object id="102" gid="92" x="8224" y="6610" width="256" height="228"/>
+  <object id="103" gid="92" x="8480" y="5218" width="256" height="228"/>
+  <object id="104" gid="92" x="5968" y="4738" width="256" height="228"/>
+  <object id="105" gid="92" x="3568" y="4498" width="256" height="228"/>
+  <object id="106" gid="92" x="2784" y="2626" width="256" height="228"/>
+  <object id="107" gid="92" x="5136" y="2194" width="256" height="228"/>
+  <object id="108" gid="92" x="8416" y="1650" width="256" height="228"/>
+  <object id="109" gid="92" x="6016" y="578" width="256" height="228"/>
+  <object id="110" gid="92" x="2960" y="818" width="256" height="228"/>
+  <object id="111" gid="92" x="2752" y="6882" width="256" height="228"/>
+  <object id="112" gid="92" x="944" y="7282" width="256" height="228"/>
+  <object id="113" gid="92" x="6736" y="7122" width="256" height="228"/>
+ </objectgroup>
+</map>

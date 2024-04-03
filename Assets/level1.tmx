@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.9" tiledversion="1.9.2" orientation="orthogonal" renderorder="right-down" width="80" height="60" tilewidth="128" tileheight="128" infinite="0" nextlayerid="5" nextobjectid="5">
+<map version="1.9" tiledversion="1.9.2" orientation="orthogonal" renderorder="right-down" width="80" height="60" tilewidth="128" tileheight="128" infinite="0" nextlayerid="4" nextobjectid="22">
  <tileset firstgid="1" source="Tileset.tsx"/>
- <tileset firstgid="91" source="../../myGame/Tileset.tsx"/>
  <layer id="1" name="Ground" width="80" height="60">
   <data encoding="base64" compression="zlib">
-   eJztw0ENAAAMA6ETWv865mIvSFg1VVVVVVVVVVVVVVVVVVVVVVVVfXoU9L1b
+   eJztw8EJAAAMA6Ej+w/dLfpScNVUVVVVVVVVVVVVVVVVVVVVVVX16QEocSWB
   </data>
  </layer>
- <layer id="3" name="Wall" width="80" height="60">
+ <layer id="2" name="Wall" width="80" height="60">
   <data encoding="base64" compression="zlib">
    eJzt3DENAEAMw8DiKH+gP/5er3dSCBhAdmbW0rjRr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a/Rr9Gv0a+5/hXZ3wPspRwJ
   </data>
  </layer>
- <objectgroup id="4" name="Enemy"/>
+ <objectgroup id="3" name="Coins">
+  <object id="21" gid="92" x="7552" y="3970" width="256" height="228"/>
+ </objectgroup>
 </map>
