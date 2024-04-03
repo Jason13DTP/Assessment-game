@@ -106,6 +106,16 @@ class PlayerCharacter(Entity):
 
 
         # Attack animation
+<<<<<<< HEAD
+=======
+        """
+        AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+        AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+        AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+        AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+        AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+        """
+>>>>>>> 5566714ea1c4c3c986030fed9c7d8ba812d46c8f
         if self.change_x == 100:
             print("yo")
             self.next_frame += 1
@@ -309,8 +319,12 @@ class gameView(arcade.View):
 
         self.end_of_map = 0
 
+<<<<<<< HEAD
         self.score = 0
         self.max_score = 0
+=======
+        self.coins_left = 20
+>>>>>>> 5566714ea1c4c3c986030fed9c7d8ba812d46c8f
 
         #Key pressed
         self.up_pressed = False
@@ -441,11 +455,19 @@ class gameView(arcade.View):
         f"Player Health: {self.player_health}/{self.player_max_health}"
         enemy_health_text = \
         f"Enemy Health: {self.enemy_health}/{self.enemy_max_health}"
+<<<<<<< HEAD
         score_text = \
         f"Orbs collected: {self.score}"
         arcade.draw_text(player_health_text, 10, 10, arcade.color.WHITE, 18)
         arcade.draw_text(enemy_health_text, 10, 40, arcade.color.WHITE, 18)
         arcade.draw_text(score_text, 10, 70, arcade.color.WHITE, 18)
+=======
+        coins_left_text = \
+        f"Orbs left: {self.coins_left}"
+        arcade.draw_text(player_health_text, 10, 10, arcade.color.WHITE, 18)
+        arcade.draw_text(enemy_health_text, 10, 40, arcade.color.WHITE, 18)
+        arcade.draw_text(coins_left_text, 10, 70, arcade.color.WHITE, 18)
+>>>>>>> 5566714ea1c4c3c986030fed9c7d8ba812d46c8f
 
         #Cooldown indicator
         indicator_img = \
@@ -558,7 +580,11 @@ class gameView(arcade.View):
         for coin in coin_hit_list:
             # Remove the coin
             coin.remove_from_sprite_lists()
+<<<<<<< HEAD
             self.score += 1
+=======
+            self.coins_left -= 1
+>>>>>>> 5566714ea1c4c3c986030fed9c7d8ba812d46c8f
 
         ###ATTACK###
         attack_img = "Assets/Images/Stuff/swing.png"
@@ -662,10 +688,22 @@ class gameView(arcade.View):
                     self.attack_sprite, enemy
                 )
 
+<<<<<<< HEAD
                 if enemy_hit_contact == True:
                     self.enemy_hit = True
                     self.enemy_health -= self.attack_damage
 
+=======
+            if self.coins_left == 0:
+                enemy_hit_contact = arcade.check_for_collision(
+                    self.attack_sprite, enemy
+                )
+
+                if enemy_hit_contact == True:
+                    self.enemy_hit = True
+                    self.enemy_health -= self.attack_damage
+
+>>>>>>> 5566714ea1c4c3c986030fed9c7d8ba812d46c8f
                 if self.enemy_hit == True:
                     if self.enemy_knockback_time < 3:
                         self.enemy_knockback_time += 1
@@ -733,10 +771,13 @@ class gameView(arcade.View):
             if self.enemy_health <= 0:
                 view = gameWinView()
                 self.window.show_view(view)
+<<<<<<< HEAD
 
         
     
         print(self.player_sprite.center_x, self.player_sprite.center_y)
+=======
+>>>>>>> 5566714ea1c4c3c986030fed9c7d8ba812d46c8f
 
 
 
