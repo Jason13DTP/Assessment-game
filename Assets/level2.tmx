@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="80" height="60" tilewidth="128" tileheight="128" infinite="0" nextlayerid="5" nextobjectid="18">
+ <tileset firstgid="1" source="Tileset.tsx"/>
+ <layer id="1" name="Ground" width="80" height="60">
+  <data encoding="base64" compression="zlib">
+   eJztw8EJAAAMA6Ej+w/dLfpScNVUVVVVVVVVVVVVVVVVVVVVVVX16QEocSWB
+  </data>
+ </layer>
+ <layer id="2" name="Wall" width="80" height="60">
+  <data encoding="base64" compression="zlib">
+   eJztmEsKxCAQBT2H9z/oLA1hkMTy05oq6F14/SwYJianlLKDRtrQH0N/DP0x9Mdo8Xey7xYX+ivoj6E/hv4Y+mP09PfF+97bM5/uYzTR/dmPYT+G/Rj2Y9iP8cV+PTOjZo3M7JkdJWNF9n3HzN/hrJ2rzrVr/up99709dq+8l0f4f2vtsHP3ETztsmNn+Y/+GPpj6I+hP4b+GJH8+f4yt8PO3Xvt9f4Wa99p57nu8PvV/OwoGTOzo35zj37WEdiPYT+G/Rj2Y9iPYb+zqfnLlTmVt2du8XG6v7fP66+gP4b+GPpj6I8xw58U9MfQH0N/DP0xavc959n8ANfBKxE=
+  </data>
+ </layer>
+ <objectgroup id="3" name="Coins">
+  <object id="8" gid="92" x="1158.18" y="1380.98" width="256" height="228"/>
+  <object id="9" gid="92" x="1129.38" y="6506.5" width="256" height="228"/>
+  <object id="10" gid="92" x="8836.86" y="6516.1" width="256" height="228"/>
+  <object id="11" gid="92" x="8836.86" y="1390.58" width="256" height="228"/>
+  <object id="12" gid="92" x="3701.74" y="2657.56" width="256" height="228"/>
+  <object id="13" gid="92" x="6274.1" y="2638.37" width="256" height="228"/>
+  <object id="14" gid="92" x="6254.9" y="5229.92" width="256" height="228"/>
+  <object id="15" gid="92" x="3720.94" y="5229.92" width="256" height="228"/>
+  <object id="16" gid="92" x="2405.96" y="3972.54" width="256" height="228"/>
+  <object id="17" gid="92" x="7560.28" y="3972.54" width="256" height="228"/>
+ </objectgroup>
+ <objectgroup id="4" name="Text"/>
+</map>
